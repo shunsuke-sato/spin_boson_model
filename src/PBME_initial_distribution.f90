@@ -3,21 +3,15 @@
 ! Released under the MIT license                    !
 ! https://opensource.org/licenses/mit-license.php   !
 !---------------------------------------------------!
-program main
+subroutine PBME_initial_distribution
   use global_variables
   implicit none
+  real(8) :: xx,pp
 
-  call initialize_mpi
+  call gaussian_random_number(xx,pp)
+  x_m(1) = sqrt(0.5d0)*xx; p_m(1) = sqrt(0.5d0)*pp
+  call gaussian_random_number(xx,pp)
+  x_m(2) = sqrt(0.5d0)*xx; p_m(2) = sqrt(0.5d0)*pp
 
-  select case(calc_mode)
-  case('MTEF')
-    call MTEF
-  case('PBME')
-    call PBME
-  case default
-    call err_finalize('Invalid calc_mode')
-  end select
 
-  call MPI_finalize(ierr)
-
-end program main
+end subroutine PBME_initial_distribution
