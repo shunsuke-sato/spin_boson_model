@@ -1,0 +1,54 @@
+!---------------------------------------------------!
+! Copyright (c) 2017 Shunsuke A. Sato               !
+! Released under the MIT license                    !
+! https://opensource.org/licenses/mit-license.php   !
+!---------------------------------------------------!
+module global_variables
+! mathamtical constant
+  real(8),parameter :: pi = 4d0*atan(1d0)
+  complex(8),parameter :: zI = (0d0,1d0)
+
+! control parameter
+  character(32) :: calc_mode = "MTEF"
+
+! Spin
+  real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP
+  complex(8) :: zpsi(2)
+  real(8),parameter :: Sz(2,2) = reshape( (/1d0, 0d0, 0d0, -1d0/), (/2,2/) )
+  real(8),parameter :: Sx(2,2) = reshape( (/0d0, 1d0, 1d0, 0d0/), (/2,2/) )
+  real(8) :: H_spin(2,2)
+
+! Spin-Boson model parameters
+  real(8),parameter :: Xi_Kondo = 0.1d0
+  real(8),parameter :: Omega_c = 2d0*delta_SP, Omega_max = 5d0*Omega_c
+
+! Harmonic oscillator
+  integer,parameter :: Num_HO = 400
+  real(8) :: X_HO(Num_HO),V_HO(Num_HO),a_HO(Num_HO)
+  real(8) :: X_HO_old(Num_HO),V_HO_old(Num_HO),a_HO_old(Num_HO)
+  real(8) :: X_HO_new(Num_HO),V_HO_new(Num_HO),a_HO_new(Num_HO)
+  real(8) :: Omega_HO(Num_HO),Cint_HO(Num_HO)
+  real(8) :: M_HO
+
+
+! Whole system
+  real(8),parameter :: beta_kB = 5d0/delta_SP !5d0/delta_SP
+
+! Parameters for time-propagation
+  integer,parameter :: Nt = 500
+  real(8),parameter :: Tprop = 20d0/Delta_SP,dt = Tprop/dble(Nt)
+
+! 
+  integer,parameter :: Ntraj=10000
+  real(8) :: Szt(0:Nt),Szt_t(0:Nt),Szt_l(0:Nt)
+
+! I/O parameters
+! MTEF
+  character(64) :: file_MTEF_Sz="MTEF_Sz.out"
+  integer :: nfile_MTEF_Sz=41
+
+! MPI
+  include 'mpif.h'
+  integer :: Myrank,Nprocs,ierr
+
+end module global_variables
