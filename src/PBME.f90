@@ -19,7 +19,15 @@ subroutine PBME
 
     if(mod(itraj,Nprocs) /= myrank)cycle
     if(myrank == 0)write(*,*)"itraj=",itraj,"/",Ntraj
-    weight0 = 2d0*(x_m(1)**2+p_m(1)**2-0.5d0)
+    select case(calc_mode)
+    case('PBME')
+      weight0 = 2d0*(x_m(1)**2+p_m(1)**2-0.5d0)
+    case('PBME_mod')
+      weight0 = x_m(1)**2 + p_m(1)**2 + x_m(2)**2 + p_m(2)**2
+      weight0 = 2d0*(x_m(1)**2+p_m(1)**2-0.5d0)*2d0**4*exp(-weight0)
+    case default
+      call err_finalize('Invalid calc_mode')
+    end select
 
 
     call PBME_dynamics
