@@ -9,7 +9,7 @@ module global_variables
   complex(8),parameter :: zI = (0d0,1d0)
 
 ! control parameter
-  character(32) :: calc_mode = 'PBME' ! 'MTEF', 'PBME'
+  character(32) :: calc_mode = 'PBME_mod' ! 'MTEF','PBME','PBME_mod'
 
 ! Spin
   real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP

@@ -12,7 +12,7 @@ program main
   select case(calc_mode)
   case('MTEF')
     call MTEF
-  case('PBME')
+  case('PBME','PBME_mod')
     call PBME
   case default
     call err_finalize('Invalid calc_mode')
