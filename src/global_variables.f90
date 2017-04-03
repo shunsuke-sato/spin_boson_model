@@ -9,7 +9,7 @@ module global_variables
   complex(8),parameter :: zI = (0d0,1d0)
 
 ! control parameter
-  character(32) :: calc_mode = "MTEF"
+  character(32) :: calc_mode = 'PBME' ! 'MTEF', 'PBME'
 
 ! Spin
   real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP
@@ -21,6 +21,9 @@ module global_variables
 ! Spin-Boson model parameters
   real(8),parameter :: Xi_Kondo = 0.1d0
   real(8),parameter :: Omega_c = 2d0*delta_SP, Omega_max = 5d0*Omega_c
+
+!! PBME and FBTS
+  real(8) :: x_m(2),p_m(2),x_n(2),p_n(2)
 
 ! Harmonic oscillator
   integer,parameter :: Num_HO = 400
@@ -46,6 +49,9 @@ module global_variables
 ! MTEF
   character(64) :: file_MTEF_Sz="MTEF_Sz.out"
   integer :: nfile_MTEF_Sz=41
+! PBME
+  character(64) :: file_PBME_Sz="PBME_Sz.out"
+  integer :: nfile_PBME_Sz=42
 
 ! MPI
   include 'mpif.h'
