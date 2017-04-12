@@ -14,7 +14,7 @@ program main
     call MTEF
   case('PBME','PBME_mod')
     call PBME
-  case('FBTS')
+  case('FBTS','FBTS_mod')
     call FBTS
   case default
     call err_finalize('Invalid calc_mode')

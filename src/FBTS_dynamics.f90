@@ -16,7 +16,16 @@ subroutine FBTS_dynamics
   z_m = x_m + zI*p_m; z_n = x_n + zI*p_n
   Sz_av = 0.5d0*(x_m(1)**2 + p_m(1)**2 + x_n(1)**2 + p_n(1)**2 &
     -x_m(2)**2 - p_m(2)**2 - x_n(2)**2 - p_n(2)**2 )
-  zSzt_t(0) = conjg(z_m(1))*z_n(1) - conjg(z_m(2))*z_n(2)
+  select case(calc_mode)
+  case('FBTS')
+    zSzt_t(0) = conjg(z_m(1))*z_n(1) - conjg(z_m(2))*z_n(2)
+  case('FBTS_mod')
+    zSzt_t(0) = conjg(z_m(1))*z_n(1) - conjg(z_m(2))*z_n(2)
+    zSzt_t(0) = zSzt_t(0) * exp(sum(conjg(z_m)*z_n)) &
+      * exp(-0.5d0*sum(abs(z_m)**2 + abs(z_n)**2)) * 16d0
+  case default
+    call err_finalize('Invalid calc_mode')
+  end select
 
 !Back propagation for the initial condition
   a_HO = -M_HO*Omega_HO**2*X_HO + Cint_HO*Sz_av
@@ -46,7 +55,16 @@ subroutine FBTS_dynamics
 
     Sz_av = 0.5d0*(x_m(1)**2 + p_m(1)**2 + x_n(1)**2 + p_n(1)**2 &
       -x_m(2)**2 - p_m(2)**2 - x_n(2)**2 - p_n(2)**2 )
-    zSzt_t(it+1) = conjg(z_m(1))*z_n(1) - conjg(z_m(2))*z_n(2)
+    select case(calc_mode)
+    case('FBTS')
+      zSzt_t(it+1) = conjg(z_m(1))*z_n(1) - conjg(z_m(2))*z_n(2)
+    case('FBTS_mod')
+      zSzt_t(it+1) = conjg(z_m(1))*z_n(1) - conjg(z_m(2))*z_n(2)
+      zSzt_t(it+1) = zSzt_t(it+1)*exp(sum(conjg(z_m)*z_n)) &
+        * exp(-0.5d0*sum(abs(z_m)**2 + abs(z_n)**2)) * 16d0
+    case default
+      call err_finalize('Invalid calc_mode')
+    end select
 
   end do
 

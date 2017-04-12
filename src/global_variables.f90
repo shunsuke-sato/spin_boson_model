@@ -9,7 +9,7 @@ module global_variables
   complex(8),parameter :: zI = (0d0,1d0)
 
 ! control parameter
-  character(32) :: calc_mode = 'FBTS' ! 'MTEF','PBME','PBME_mod'
+  character(32) :: calc_mode = 'FBTS_mod' !'FBTS' 'MTEF','PBME','PBME_mod'
 
 ! Spin
   real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP
@@ -43,7 +43,7 @@ module global_variables
   real(8),parameter :: Tprop = 20d0/Delta_SP,dt = Tprop/dble(Nt)
 
 ! 
-  integer,parameter :: Ntraj=10000
+  integer,parameter :: Ntraj=1000000
   real(8) :: Szt(0:Nt),Szt_t(0:Nt),Szt_l(0:Nt)
   complex(8) :: zSzt_t(0:Nt)
 
