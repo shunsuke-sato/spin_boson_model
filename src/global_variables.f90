@@ -9,7 +9,7 @@ module global_variables
   complex(8),parameter :: zI = (0d0,1d0)
 
 ! control parameter
-  character(32) :: calc_mode = 'PBME_mod' ! 'MTEF','PBME','PBME_mod'
+  character(32) :: calc_mode = 'FBTS' ! 'MTEF','PBME','PBME_mod'
 
 ! Spin
   real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP
@@ -24,6 +24,7 @@ module global_variables
 
 !! PBME and FBTS
   real(8) :: x_m(2),p_m(2),x_n(2),p_n(2)
+  complex(8) :: z_m(2), z_n(2)
 
 ! Harmonic oscillator
   integer,parameter :: Num_HO = 400
@@ -44,6 +45,7 @@ module global_variables
 ! 
   integer,parameter :: Ntraj=10000
   real(8) :: Szt(0:Nt),Szt_t(0:Nt),Szt_l(0:Nt)
+  complex(8) :: zSzt_t(0:Nt)
 
 ! I/O parameters
 ! MTEF
@@ -52,6 +54,9 @@ module global_variables
 ! PBME
   character(64) :: file_PBME_Sz="PBME_Sz.out"
   integer :: nfile_PBME_Sz=42
+! FBTS
+  character(64) :: file_FBTS_Sz="FBTS_Sz.out"
+  integer :: nfile_FBTS_Sz=43
 
 ! MPI
   include 'mpif.h'

@@ -1,0 +1,22 @@
+!---------------------------------------------------!
+! Copyright (c) 2017 Shunsuke A. Sato               !
+! Released under the MIT license                    !
+! https://opensource.org/licenses/mit-license.php   !
+!---------------------------------------------------!
+subroutine FBTS_initial_distribution
+  use global_variables
+  implicit none
+  real(8) :: xx,pp
+
+  call gaussian_random_number(xx,pp)
+  x_m(1) = sqrt(0.5d0)*xx; p_m(1) = sqrt(0.5d0)*pp
+  call gaussian_random_number(xx,pp)
+  x_m(2) = sqrt(0.5d0)*xx; p_m(2) = sqrt(0.5d0)*pp
+
+  call gaussian_random_number(xx,pp)
+  x_n(1) = sqrt(0.5d0)*xx; p_n(1) = sqrt(0.5d0)*pp
+  call gaussian_random_number(xx,pp)
+  x_n(2) = sqrt(0.5d0)*xx; p_n(2) = sqrt(0.5d0)*pp
+
+
+end subroutine FBTS_initial_distribution
