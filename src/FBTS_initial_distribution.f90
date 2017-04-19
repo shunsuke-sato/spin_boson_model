@@ -21,15 +21,15 @@ subroutine FBTS_initial_distribution
     x_n(2) = sqrt(0.5d0)*xx; p_n(2) = sqrt(0.5d0)*pp
 
   case('FBTS_mod')
-    call gaussian_random_number(xx,pp)
-    x_m(1) = xx; p_m(1) = pp
-    call gaussian_random_number(xx,pp)
-    x_m(2) = xx; p_m(2) = pp
+    call correlated_gaussian_random_number(xx,pp)
+    x_m(1) = xx; x_n(1) = pp
+    call correlated_gaussian_random_number(xx,pp)
+    x_m(2) = xx; x_n(2) = pp
 
-    call gaussian_random_number(xx,pp)
-    x_n(1) = xx; p_n(1) = pp
-    call gaussian_random_number(xx,pp)
-    x_n(2) = xx; p_n(2) = pp
+    call correlated_gaussian_random_number(xx,pp)
+    p_m(1) = xx; p_n(1) = pp
+    call correlated_gaussian_random_number(xx,pp)
+    p_m(2) = xx; p_n(2) = pp
   case default
     call err_finalize('Invalid calc_mode')
   end select
