@@ -2,7 +2,7 @@ FC = mpif90 -O2 ## gfotran
 #FC = mpiifort -O3 -xHOST -ipo -ip ## intel
 #FC = mpifrtpx -O3 -Kfast ##FX100@Nagoya
 
-LN = -llapack -lblas
+LN = #-llapack -lblas
 #LN = -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_core.a ${MKLROOT}/lib/intel64/libmkl_sequential.a -Wl,--end-group -lpthread -lm
 
 VPATH = src:object

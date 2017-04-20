@@ -17,7 +17,7 @@ subroutine FBTS_dynamics
   Sz_av = 0.5d0*(x_m(1)**2 + p_m(1)**2 + x_n(1)**2 + p_n(1)**2 &
     -x_m(2)**2 - p_m(2)**2 - x_n(2)**2 - p_n(2)**2 )
   select case(calc_mode)
-  case('FBTS')
+  case('FBTS','FBTS_approx')
     zweight0 = 1d0
   case('FBTS_mod')
     zweight0 = exp(-zi*aimag(sum(z_m*conjg(z_n))))*(2d0/sqrt(3d0))**(2*2)
@@ -41,16 +41,29 @@ subroutine FBTS_dynamics
 ! Propagate spin (Enforced time-reversal symmetry scheme)
     X_Cint_av = sum(X_HO*Cint_HO)
     H_spin = eps_SP*Sz + delta_SP*Sx -X_Cint_av*Sz
-    z_m = x_m + zI*p_m; z_n = x_n + zI*p_n
-    call spin_propagation(z_m,H_spin,dt*0.5d0)
-    call spin_propagation(z_n,H_spin,dt*0.5d0)
-    X_Cint_av = sum(X_HO_new*Cint_HO)
-    H_spin = eps_SP*Sz + delta_SP*Sx -X_Cint_av*Sz
-    call spin_propagation(z_m,H_spin,dt*0.5d0)
-    call spin_propagation(z_n,H_spin,dt*0.5d0)
-    x_m = real(z_m); p_m = aimag(z_m)
-    x_n = real(z_n); p_n = aimag(z_n)
-
+    select case(calc_mode)
+    case('FBTS','FBTS_mod')
+      z_m = x_m + zI*p_m; z_n = x_n + zI*p_n
+      call spin_propagation(z_m,H_spin,dt*0.5d0)
+      call spin_propagation(z_n,H_spin,dt*0.5d0)
+      X_Cint_av = sum(X_HO_new*Cint_HO)
+      H_spin = eps_SP*Sz + delta_SP*Sx -X_Cint_av*Sz
+      call spin_propagation(z_m,H_spin,dt*0.5d0)
+      call spin_propagation(z_n,H_spin,dt*0.5d0)
+      x_m = real(z_m); p_m = aimag(z_m)
+      x_n = real(z_n); p_n = aimag(z_n)
+    case('FBTS_approx')
+      z_m = x_m + zI*p_m
+      call spin_propagation(z_m,H_spin,dt*0.5d0)
+      X_Cint_av = sum(X_HO_new*Cint_HO)
+      H_spin = eps_SP*Sz + delta_SP*Sx -X_Cint_av*Sz
+      call spin_propagation(z_m,H_spin,dt*0.5d0)
+      z_n = z_m
+      x_m = real(z_m); p_m = aimag(z_m)
+      x_n = real(z_n); p_n = aimag(z_n)
+    case default
+      call err_finalize('Invalid calc_mode')
+    end select
     X_HO_old = X_HO; X_HO = X_HO_new
 
     Sz_av = 0.5d0*(x_m(1)**2 + p_m(1)**2 + x_n(1)**2 + p_n(1)**2 &
