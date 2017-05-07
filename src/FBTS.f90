@@ -21,8 +21,18 @@ subroutine FBTS
     if(myrank == 0)write(*,*)"itraj=",itraj,"/",Ntraj
     zweight0 = (x_m(1) + zI * p_m(1))*(x_n(1) - zI * p_n(1))
 
-    call FBTS_dynamics
-    Szt_l = Szt_l + zSzt_t*zweight0
+    select case(calc_mode)
+    case('FBTS','FBTS_mod','FBTS_approx')
+      call FBTS_dynamics
+      Szt_l = Szt_l + zSzt_t*zweight0
+    case('JFBTS')
+      call JFBTS_dynamics(zweight0)
+      Szt_l = Szt_l + zSzt_t
+    case default
+      call err_finalize('Invalid calc_mode in FBTS')
+    end select
+
+
 
   end do
   call MPI_ALLREDUCE(Szt_l,Szt,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)

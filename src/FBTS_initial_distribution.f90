@@ -9,7 +9,7 @@ subroutine FBTS_initial_distribution
   real(8) :: xx,pp
 
   select case(calc_mode)
-  case('FBTS')
+  case('FBTS','JFBTS')
     call gaussian_random_number(xx,pp)
     x_m(1) = sqrt(0.5d0)*xx; p_m(1) = sqrt(0.5d0)*pp
     call gaussian_random_number(xx,pp)
