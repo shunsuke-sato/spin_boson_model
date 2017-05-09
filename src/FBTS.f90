@@ -9,6 +9,13 @@ subroutine FBTS
   integer :: itraj,it
   complex(8) :: zweight0
 
+  if(calc_mode == 'JFBTS')then
+     call random_seeds_for_parallel(Myrank,Nprocs)
+     do it = 1,10000
+        call FBTS_initial_distribution
+     end do
+  end if
+
   Szt_t=0d0; Szt_l = 0d0
   call setting_bath_parameters
 
@@ -48,3 +55,19 @@ subroutine FBTS
 
 
 end subroutine FBTS
+
+subroutine random_seeds_for_parallel(myrank,Nprocs)
+  implicit none
+  integer,intent(in) :: myrank,nprocs
+  integer i, seedsize
+  integer,allocatable:: seed(:)
+
+  call random_seed(size=seedsize) 
+  allocate(seed(seedsize))  
+  call random_seed(get=seed) 
+
+  do i = 1,seedsize
+     seed(i) = seed(i) -1**myrank* (myrank*(seed(i)/Nprocs)+myrank)
+  end do
+
+end subroutine random_seeds_for_parallel
