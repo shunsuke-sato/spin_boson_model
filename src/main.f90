@@ -12,6 +12,8 @@ program main
   select case(calc_mode)
   case('MTEF')
     call MTEF
+  case('CTEF')
+    call CTEF
   case('PBME','PBME_mod')
     call PBME
   case('FBTS','FBTS_mod','FBTS_approx','JFBTS')
