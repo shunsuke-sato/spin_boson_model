@@ -12,7 +12,7 @@ OBJ_dir = $(addprefix object/,$(OBJ))
 
 PROG = spin-boson
 
-$(PROG):global_variables.o $(OBJ)
+$(PROG):global_variables.o CTEF_module.o $(OBJ)
 	$(FC) -o $(PROG) $(OBJ_dir) $(LN)
 
 main.o:main.f90

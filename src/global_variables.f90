@@ -14,7 +14,6 @@ module global_variables
 ! Spin
   real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP
   complex(8) :: zpsi(2)
-  complex(8) :: zpsi_CTEF(2,2)
   real(8),parameter :: Sz(2,2) = reshape( (/1d0, 0d0, 0d0, -1d0/), (/2,2/) )
   real(8),parameter :: Sx(2,2) = reshape( (/0d0, 1d0, 1d0, 0d0/), (/2,2/) )
   real(8) :: H_spin(2,2)
@@ -35,7 +34,6 @@ module global_variables
   real(8) :: X_HO_new(Num_HO),V_HO_new(Num_HO),a_HO_new(Num_HO)
   real(8) :: Omega_HO(Num_HO),Cint_HO(Num_HO)
   real(8) :: M_HO
-  complex(8) :: Z_HO_CTEF(Num_HO,2)
 
 
 ! Whole system
@@ -61,8 +59,8 @@ module global_variables
   character(64) :: file_FBTS_Sz="FBTS_Sz.out"
   integer :: nfile_FBTS_Sz=43
 ! CTEF
-  character(64) :: file_MTEF_Sz="CTEF_Sz.out"
-  integer :: nfile_MTEF_Sz=44
+  character(64) :: file_CTEF_Sz="CTEF_Sz.out"
+  integer :: nfile_CTEF_Sz=44
 
 ! MPI
   include 'mpif.h'
