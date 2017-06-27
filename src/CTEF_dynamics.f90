@@ -28,7 +28,9 @@ subroutine CTEF_dynamics
   do it = 0,Nt-1
 
     call set_hamiltonian_spin(zHO_CTEF,zHO_dot_CTEF)
+    zpsi_t = zpsi_CTEF
     call zhpsi_CTEF(zpsi_t,zhpsi_t)
+    call set_hamiltonian_bath(zpsi_t,zhpsi_t,zHO_CTEF, zHO_dot_CTEF)
 
   end do
 
