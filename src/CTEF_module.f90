@@ -53,14 +53,14 @@ module CTEF_module
       end do
 
 
-      zDs_CTEF(1,1) = aimag(sum(0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
+      zDs_CTEF(1,1) = real(zI*sum(0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
                           -zHO_tmp(:,1)*conjg(zHO_dot_tmp(:,1))) ))
-      zDs_CTEF(2,2) = aimag(sum(0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
+      zDs_CTEF(2,2) = real((zI*sum(0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
                           -zHO_tmp(:,2)*conjg(zHO_dot_tmp(:,2))) ))
-      zDs_CTEF(1,2) = sum(- 0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
+      zDs_CTEF(1,2) = zI*sum(- 0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
                           -zHO_tmp(:,2)*conjg(zHO_dot_tmp(:,2))) &
                           +conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,2))*zSs_CTEF(1,2) 
-      zDs_CTEF(2,1) = sum(- 0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
+      zDs_CTEF(2,1) = zI*sum(- 0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
                           -zHO_tmp(:,1)*conjg(zHO_dot_tmp(:,1))) &
                           +conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,1))*zSs_CTEF(2,1) 
       
@@ -109,7 +109,25 @@ module CTEF_module
 
     subroutine set_hamiltonian_bath(zpsi_t,zhpsi_t,zHO_t, zHO_dot_t)
       implicit none
-      
+      complex(8) :: zHO_tmp(Num_HO,2),zHO_dot_tmp(Num_HO,2)      
+      complex(8) :: zs
+
+      zSb_CTEF(1,1) = sum(abs(zpsi_t(:,1))**2)
+      zSb_CTEF(2,2) = sum(abs(zpsi_t(:,2))**2)
+      zSb_CTEF(1,2) = sum(conjg(zpsi_t(:,1))*zpsi(:,2))
+      zSb_CTEF(2,1) = conjg(zSb_CTEF(1,2))
+      zSb_CTEF = zSb_CTEF*zSs_CTEF
+
+      zDb_CTEF(1,1) = zI*real(sum(conjg(zpsi_t(:,1))*zhpsi_t(:,1)/zI))
+      zDb_CTEF(2,2) = zI*real(sum(conjg(zpsi_t(:,2))*zhpsi_t(:,2)/zI))
+      zDb_CTEF(1,2) = zI*sum(conjg(zpsi_t(:,1))*zhpsi_t(:,2)/zI)*zSs_CTEF(1,2) &
+        + zI*sum(- 0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
+                          -zHO_tmp(:,2)*conjg(zHO_dot_tmp(:,2))) &
+                          *sum(conjg(zpsi_t(:,1))*zpsi_t(:,2))
+      zDb_CTEF(2,1) = zI*sum(conjg(zpsi_t(:,2))*zhpsi_t(:,1)/zI)*zSs_CTEF(2,1) &
+        + zI*sum(- 0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
+                          -zHO_tmp(:,1)*conjg(zHO_dot_tmp(:,1))) &
+                          *sum(conjg(zpsi_t(:,1))*zpsi_t(:,2))
 
 
     end subroutine set_hamiltonian_bath
