@@ -66,10 +66,14 @@ module CTEF_module
       implicit none
       complex(8),intent(in) :: zpsi_t(2,2), zHO_t(Num_HO,2)
       complex(8),intent(inout) :: zHO_dot_t(Num_HO,2) 
+      integer,parameter :: Nscf_CTEF = 2
       complex(8) :: zs_ab(2,2) ! overlap matrix for spin
       complex(8) :: zs_cd(2,2) ! overlap matrix for bath
+      complex(8) :: zd_ab(2,2) ! time-derivative-overlap matrix for bath
+      complex(8) :: zd_cd(2,2) ! time-derivative-overlap matrix for bath
       complex(8) :: zX_Cint_av(2,2), zEb(2,2)
       complex(8) :: zs,zvec(2)
+      integer :: iter
       integer :: i,j
 
       zs_ab(1,1) = 1d0
@@ -120,6 +124,34 @@ module CTEF_module
       zHb_CTEF(2,2) = -real(zs)
       zHb_CTEF(2,1) = zs
 
+      do iter = 1,Nscf_CTEF
+
+
+        zd_cd(1,1) = 0.5d0*sum(conjg(zHO_t(:,1))*zHO_dot_t(:,1) &
+          - conjg(zHO_dot_t(:,1))*zHO_t(:,1))
+
+        zd_cd(2,1) = sum(-0.5d0*(conjg(zHO_t(:,1))*zHO_dot_t(:,1) &
+                               + conjg(zHO_dot_t(:,1))*zHO_t(:,1) ) &
+                               +conjg(zHO_t(:,2))*zHO_dot_t(:,1) )
+
+        zd_cd(1,2) = sum(-0.5d0*(conjg(zHO_t(:,2))*zHO_dot_t(:,2) &
+                               + conjg(zHO_dot_t(:,2))*zHO_t(:,2) ) &
+                               +conjg(zHO_t(:,1))*zHO_dot_t(:,2) )
+
+        zd_cd(2,2) = 0.5d0*sum(conjg(zHO_t(:,2))*zHO_dot_t(:,2) &
+          - conjg(zHO_dot_t(:,2))*zHO_t(:,2))
+
+        zd_cd = zd_cd * zs_cd
+
+! partially prepare spin-Hamiltonian
+        zDs_CTEF(1,1) = real(zI*zd_cd(1,1))
+        zDs_CTEF(1,2) = zI*zd_cd(1,2)
+        zDs_CTEF(2,1) = zI*zd_cd(2,1)
+        zDs_CTEF(2,2) = real(zI*zd_cd(2,2))
+
+
+
+      end do
 
 
     end subroutine refine_zHO_dot
