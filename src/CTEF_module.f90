@@ -17,54 +17,9 @@ module CTEF_module
   complex(8) :: zDs_CTEF(2,2), zSs_CTEF(2,2)
 
   complex(8) :: zDb_CTEF(2,2), zSb_CTEF(2,2)
-  complex(8) :: zEb_CTEF(2,2),zFb_CTEF(2)
+  complex(8) :: zHb_CTEF(2,2),zFb_CTEF(2)
 
   contains
-    subroutine set_hamiltonian_spin(zHO_tmp, zHO_dot_tmp)
-      implicit none
-      complex(8) :: zHO_tmp(Num_HO,2),zHO_dot_tmp(Num_HO,2)
-      complex(8) :: zX_Cint_av(2,2)
-      complex(8) :: zs
-      integer :: i,j
-
-      zSs_CTEF(1,1) = 1d0
-      zSs_CTEF(2,2) = 1d0
-      zSs_CTEF(1,2) = sum(exp(&
-            -0.5d0*abs(zHO_tmp(:,1))**2 -0.5d0*abs(zHO_tmp(:,2))**2  &
-            + conjg(zHO_tmp(:,2))*zHO_tmp(:,2) &
-            ))
-      zSs_CTEF(2,1) = conjg(zSs_CTEF(1,2))
-
-      do i = 1,2
-        do j =1,2
-          zX_Cint_av(i,j) = sum( &
-            Cint_HO(:) &
-            *sqrt(0.5d0/(M_HO*Omega_HO(:)))*(conjg(zHO_tmp(:,i))+zHO_tmp(:,j)) )
-          zX_Cint_av(i,j) = zX_Cint_av(i,j) *zSs_CTEF(i,j) 
-        end do
-      end do
-      
-
-      do i = 1,2
-        do j =1,2
-          zHs_CTEF(:,:,i,j) = (eps_SP*Sz(:,:) + delta_SP*Sx(:,:))*zSs_CTEF(i,j) &
-            -zX_Cint_av(i,j)*Sz(:,:)
-        end do
-      end do
-
-
-      zDs_CTEF(1,1) = real(zI*sum(0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
-                          -zHO_tmp(:,1)*conjg(zHO_dot_tmp(:,1))) ))
-      zDs_CTEF(2,2) = real((zI*sum(0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
-                          -zHO_tmp(:,2)*conjg(zHO_dot_tmp(:,2))) ))
-      zDs_CTEF(1,2) = zI*sum(- 0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
-                          -zHO_tmp(:,2)*conjg(zHO_dot_tmp(:,2))) &
-                          +conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,2))*zSs_CTEF(1,2) 
-      zDs_CTEF(2,1) = zI*sum(- 0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
-                          -zHO_tmp(:,1)*conjg(zHO_dot_tmp(:,1))) &
-                          +conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,1))*zSs_CTEF(2,1) 
-      
-    end subroutine set_hamiltonian_spin
 
     subroutine zhpsi_CTEF(zpsi_t,zhpsi_t)
       implicit none
@@ -107,29 +62,65 @@ module CTEF_module
 
     end subroutine zhpsi_CTEF
 
-    subroutine set_hamiltonian_bath(zpsi_t,zhpsi_t,zHO_t, zHO_dot_t)
+    subroutine refine_zHO_dot(zpsi_t,zHO_t,zHO_dot_t)
       implicit none
-      complex(8) :: zHO_tmp(Num_HO,2),zHO_dot_tmp(Num_HO,2)      
-      complex(8) :: zs
+      complex(8),intent(in) :: zpsi_t(2,2), zHO_t(Num_HO,2)
+      complex(8),intent(inout) :: zHO_dot_t(Num_HO,2) 
+      complex(8) :: zs_ab(2,2) ! overlap matrix for spin
+      complex(8) :: zs_cd(2,2) ! overlap matrix for bath
+      complex(8) :: zX_Cint_av(2,2), zEb(2,2)
+      complex(8) :: zs,zvec(2)
+      integer :: i,j
 
-      zSb_CTEF(1,1) = sum(abs(zpsi_t(:,1))**2)
-      zSb_CTEF(2,2) = sum(abs(zpsi_t(:,2))**2)
-      zSb_CTEF(1,2) = sum(conjg(zpsi_t(:,1))*zpsi(:,2))
-      zSb_CTEF(2,1) = conjg(zSb_CTEF(1,2))
-      zSb_CTEF = zSb_CTEF*zSs_CTEF
+      zs_ab(1,1) = 1d0
+      zs_ab(2,2) = 1d0
+      zs_ab(1,2) = sum(conjg(zpsi_t(:,1))*zpsi_t(:,2))
+      zs_ab(2,1) = conjg(zs_ab(1,2))
 
-      zDb_CTEF(1,1) = zI*real(sum(conjg(zpsi_t(:,1))*zhpsi_t(:,1)/zI))
-      zDb_CTEF(2,2) = zI*real(sum(conjg(zpsi_t(:,2))*zhpsi_t(:,2)/zI))
-      zDb_CTEF(1,2) = zI*sum(conjg(zpsi_t(:,1))*zhpsi_t(:,2)/zI)*zSs_CTEF(1,2) &
-        + zI*sum(- 0.5d0*(conjg(zHO_tmp(:,2))*zHO_dot_tmp(:,2) &
-                          -zHO_tmp(:,2)*conjg(zHO_dot_tmp(:,2))) &
-                          *sum(conjg(zpsi_t(:,1))*zpsi_t(:,2))
-      zDb_CTEF(2,1) = zI*sum(conjg(zpsi_t(:,2))*zhpsi_t(:,1)/zI)*zSs_CTEF(2,1) &
-        + zI*sum(- 0.5d0*(conjg(zHO_tmp(:,1))*zHO_dot_tmp(:,1) &
-                          -zHO_tmp(:,1)*conjg(zHO_dot_tmp(:,1))) &
-                          *sum(conjg(zpsi_t(:,1))*zpsi_t(:,2))
+      zs_cd(1,1) = 1d0
+      zs_cd(2,2) = 1d0
+      zs_cd(1,2) = sum(exp(&
+            -0.5d0*abs(zHO_t(:,1))**2 -0.5d0*abs(zHO_t(:,2))**2  &
+            + conjg(zHO_t(:,1))*zHO_t(:,2) &
+            ))
+      zs_cd(2,1) = conjg(zs_cd(1,2))
+
+! partially prepare spin-Hamiltonian
+      zSs_CTEF(:,:) = zs_ab(:,:)
+
+      do i = 1,2
+        do j =1,2
+          zX_Cint_av(i,j) = sum( &
+            Cint_HO(:) &
+            *sqrt(0.5d0/(M_HO*Omega_HO(:)))*(conjg(zHO_t(:,i))+zHO_t(:,j)) )
+          zX_Cint_av(i,j) = zX_Cint_av(i,j) *zSs_CTEF(i,j) 
+          zEb(i,j) = sum(conjg(zHO_t(:,i))*zHO_t(:,j))+dble(Num_HO)/2d0
+        end do
+      end do
+      zX_Cint_av = zX_Cint_av * zs_cd
+      zEb = zEb * zs_cd
+      
+
+      do i = 1,2
+        do j =1,2
+          zHs_CTEF(:,:,i,j) = (eps_SP*Sz(:,:) + delta_SP*Sx(:,:))*zSs_CTEF(i,j) &
+            -zX_Cint_av(i,j)*Sz(:,:) + zEb(i,j)
+        end do
+      end do
+
+! partially prepare bath-Hamiltonian
+      zSb_CTEF = zs_ab*zs_cd
+
+      zvec(:) = matmul(zHs_CTEF(:,:,1,2),zpsi_t(:,2))
+      zs = sum(conjg(zpsi_t(:,1))*zvec(:))
+      zHb_CTEF(1,1) = -real(zs)
+      zHb_CTEF(1,2) = zs
+      zvec(:) = matmul(zHs_CTEF(:,:,2,1),zpsi_t(:,1))
+      zs = sum(conjg(zpsi_t(:,2))*zvec(:))
+      zHb_CTEF(2,2) = -real(zs)
+      zHb_CTEF(2,1) = zs
 
 
-    end subroutine set_hamiltonian_bath
-  
+
+    end subroutine refine_zHO_dot
 end module CTEF_module
