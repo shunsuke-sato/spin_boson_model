@@ -5,6 +5,7 @@
 !---------------------------------------------------!
 program main
   use global_variables
+  use CTEF_module
   implicit none
 
   call initialize_mpi
