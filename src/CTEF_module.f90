@@ -82,13 +82,15 @@ module CTEF_module
       
       Szt_t = 0d0 ! zero clear
 
+      call calc_Szt(Szt_t(0),zpsi_CTEF, zHO_CTEF)
       zHO_dot_CTEF = 0d0
-      call refine_zHO_dot(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+      call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
 
       do it = 0,Nt-1
 
 
         call dt_evolve_etrs(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
+        call calc_Szt(Szt_t(it+1),zpsi_CTEF, zHO_CTEF)
 
         
       end do
@@ -105,11 +107,23 @@ module CTEF_module
       integer :: ipred_corr
 
 ! propagation: t => t + dt/2
-!! spin-propagation
       call dt_evolve_spin_Taylor(zpsi_t,0.5d0*dt)
-!! bath-propagation
+      call dt_evolve_bath(zHO_t,0.5d0*dt)
+      call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+      zpsi_s = zpsi_t
+      zHO_s = zHO_t
 
+      do ipred_corr = 1, Npred_corr
+        zpsi_t = zpsi_s
+        zHO_t = zHO_s
 
+        call dt_evolve_spin_Taylor(zpsi_t,0.5d0*dt)
+        call dt_evolve_bath(zHO_t,0.5d0*dt)
+        if(ipred_corr /= Npred_corr)then
+          call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+        end if
+
+      end do
 
     end subroutine dt_evolve_etrs
 !-----------------------------------------------------------------------------------------
@@ -132,6 +146,35 @@ module CTEF_module
       end do
 
     end subroutine dt_evolve_spin_Taylor
+!-----------------------------------------------------------------------------------------
+    subroutine dt_evolve_bath(zHO_t,dt_t)
+      implicit none
+      complex(8),intent(inout) :: zHO_t(2,Num_HO)
+      real(8),intent(in) :: dt_t
+      integer :: iho
+      complex(8) :: zhHO_t(2,Num_HO),zhhHO_t(2,Num_HO)
+      complex(8) :: zHeff(2,2), zFeff(2)
+
+      zHeff = matmul(zSb_inv_CTEF, (zHB_CTEF - zDb_CTEF))
+      zFeff = matmul(zSb_inv_CTEF, zFB_CTEF)
+
+      do iho = 1,Num_HO
+        zHO_t(:,iho) = zHO_t(:,iho) +(0.5d0*dt_t/zI)*zFeff(:) &
+          *(sqrt(0.5d0/(M_HO*omega_HO(iho))))
+      end do
+
+      zhHO_t = matmul(zHeff,zHO_t)
+      zhhHO_t = matmul(zHeff,zhHO_t)
+      
+      zHO_t = zHO_t + (-zI*dt_t)*zhHO_t + (-zI*dt_t)**2/2*zhhHO_t
+
+      do iho = 1,Num_HO
+        zHO_t(:,iho) = zHO_t(:,iho) +(0.5d0*dt_t/zI)*zFeff(:) &
+          *(sqrt(0.5d0/(M_HO*omega_HO(iho))))
+      end do
+
+
+    end subroutine dt_evolve_bath
 
 !-----------------------------------------------------------------------------------------
     subroutine zhpsi_CTEF(zpsi_t,zhpsi_t)
@@ -171,7 +214,7 @@ module CTEF_module
 
     end subroutine zhpsi_CTEF
 !-----------------------------------------------------------------------------------------
-    subroutine refine_zHO_dot(zpsi_t,zHO_t,zHO_dot_t)
+    subroutine refine_effective_hamiltonian(zpsi_t,zHO_t,zHO_dot_t)
       implicit none
       complex(8),intent(in) :: zpsi_t(2,2), zHO_t(2,Num_HO)
       complex(8),intent(inout) :: zHO_dot_t(2,Num_HO) 
@@ -324,8 +367,25 @@ module CTEF_module
           - real(zI*zd_ab(2,1)*zs_cd(2,1) + zI*zs_ab(2,1)*zd_cd(2,1))
 
 
-    end subroutine refine_zHO_dot
+  end subroutine refine_effective_hamiltonian
 !-----------------------------------------------------------------------------------------
+  subroutine calc_Szt(tSz,zpsi_t,zHO_t)
+    implicit none
+    real(8),intent(out) :: tSz
+    complex(8),intent(in) :: zpsi_t(2,2), zHO_t(2,Num_HO)
+    complex(8) :: zs, zSz_ab(2,2), zvec(2)
+
+    zs = sum(exp(&
+            -0.5d0*abs(zHO_t(1,:))**2 -0.5d0*abs(zHO_t(2,:))**2  &
+            + conjg(zHO_t(1,:))*zHO_t(2,:) &
+            ))
+    
+    tSz = abs(zpsi_t(1,1))**2 - abs(zpsi_t(2,1))**2 &
+        + abs(zpsi_t(1,2))**2 - abs(zpsi_t(2,2))**2
+    zvec(:) = matmul(Sz,zpsi_t(:,2))
+    tSz = tSz + 2d0*real( sum(conjg(zpsi_t(:,1))*zvec(:)) )
+
+  end subroutine calc_Szt
 !-----------------------------------------------------------------------------------------
 !-----------------------------------------------------------------------------------------
 end module CTEF_module
