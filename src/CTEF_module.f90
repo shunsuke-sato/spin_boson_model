@@ -34,6 +34,7 @@ module CTEF_module
       integer :: itraj,it,iphi
       real(8) :: norm
       real(8) :: phi0,phi
+      complex(8) :: zpsi_stored(2,2), zHO_stored(2,num_HO)
 
 
       Szt_t=0d0; Szt_l = 0d0
@@ -41,7 +42,7 @@ module CTEF_module
       
       do itraj = 1,Ntraj
         
-! set_forward_backward_trajectories
+        call set_forward_backward_trajectries(zpsi_stored,zHO_stored)
         call random_number(phi0); phi0 = 2d0*pi*phi0
 
         if(mod(itraj,Nprocs) /= myrank)cycle
@@ -49,7 +50,8 @@ module CTEF_module
         
         do iphi = 0,Nphi-1
           phi = phi0 + 2d0*pi*dble(iphi)/Nphi
-! set_initial_condition(phi,norm)
+          call set_initial_condition(zpsi_stored,zHO_stored, &
+                                     zpsi_CTEF,  zHO_CTEF, phi, norm)
 
           call CTEF_dynamics
           Szt_l = Szt_l + Szt_t*norm*exp(-zI*phi)
@@ -239,7 +241,7 @@ module CTEF_module
 
       zs_cd(1,1) = 1d0
       zs_cd(2,2) = 1d0
-      zs_cd(1,2) = sum(exp(&
+      zs_cd(1,2) = exp(sum(&
             -0.5d0*abs(zHO_t(1,:))**2 -0.5d0*abs(zHO_t(2,:))**2  &
             + conjg(zHO_t(1,:))*zHO_t(2,:) &
             ))
@@ -369,13 +371,57 @@ module CTEF_module
 
   end subroutine refine_effective_hamiltonian
 !-----------------------------------------------------------------------------------------
+  subroutine set_forward_backward_trajectries(zpsi_t,zHO_t)
+    implicit none
+    complex(8),intent(out) :: zpsi_t(2,2), zHO_t(2,Num_HO)
+    integer :: iho
+    real(8) :: q1,p1,q2,p2
+    
+    zpsi_t(1,:) = 1d0
+    zpsi_t(2,:) = 0d0
+      
+    do iho = 1,num_HO
+      call correlated_gaussian_random_number(q1,q2)
+      call correlated_gaussian_random_number(p1,p2)
+      zHO_t(1,iho) = q1 + zI*p1
+      zHO_t(2,iho) = q2 + zI*p2
+    end do
+    
+  end subroutine set_forward_backward_trajectries
+!-----------------------------------------------------------------------------------------
+  subroutine set_initial_condition(zpsi_in,zHO_in, zpsi_out,zHO_out, phi, norm)
+    implicit none
+    complex(8),intent(in) :: zpsi_in(2,2),zHO_in(2,num_HO)
+    complex(8),intent(out) :: zpsi_out(2,2),zHO_out(2,num_HO)
+    real(8),intent(in) :: phi
+    real(8),intent(out) :: norm
+    complex(8) :: zs_spin, zs_bath
+
+
+    zpsi_out(:,1) = zpsi_in(:,1)
+    zpsi_out(:,2) = exp(zI*phi)*zpsi_in(:,2)
+
+    zs_spin = sum(conjg(zpsi_out(:,1))*zpsi_out(:,2))
+    zs_bath = exp(sum(&
+            -0.5d0*abs(zHO_out(1,:))**2 -0.5d0*abs(zHO_out(2,:))**2  &
+            + conjg(zHO_out(1,:))*zHO_out(2,:) &
+            ))
+
+
+    norm = sum( abs(zpsi_in(:,:))**2 ) + 2d0*real( zs_spin* zs_bath)
+    
+    zpsi_out = zpsi_out/ sqrt(norm)
+
+
+  end subroutine set_initial_condition
+!-----------------------------------------------------------------------------------------
   subroutine calc_Szt(tSz,zpsi_t,zHO_t)
     implicit none
     real(8),intent(out) :: tSz
     complex(8),intent(in) :: zpsi_t(2,2), zHO_t(2,Num_HO)
     complex(8) :: zs, zSz_ab(2,2), zvec(2)
 
-    zs = sum(exp(&
+    zs = exp(sum(&
             -0.5d0*abs(zHO_t(1,:))**2 -0.5d0*abs(zHO_t(2,:))**2  &
             + conjg(zHO_t(1,:))*zHO_t(2,:) &
             ))
