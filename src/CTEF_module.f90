@@ -55,7 +55,7 @@ module CTEF_module
                                      zpsi_CTEF,  zHO_CTEF, phi, norm)
 
           call CTEF_dynamics
-          Szt_l = Szt_l + Szt_t*norm*exp(-zI*phi)
+          Szt_l = Szt_l + Szt_t*norm*exp(-zI*phi)*zweight
 
         end do
 
@@ -399,7 +399,7 @@ module CTEF_module
         *exp(0.5d0*abs(zHO_t(1,iho)-zHO_t(2,iho))**2)
 
     end do
-    
+
     
   end subroutine set_forward_backward_trajectries
 !-----------------------------------------------------------------------------------------
@@ -414,15 +414,16 @@ module CTEF_module
 
     zpsi_out(:,1) = zpsi_in(:,1)
     zpsi_out(:,2) = exp(zI*phi)*zpsi_in(:,2)
+    zHO_out = zHO_in
 
     zs_spin = sum(conjg(zpsi_out(:,1))*zpsi_out(:,2))
-    zs_bath = exp(sum(&
+    zs_bath = exp(sum(& 
             -0.5d0*abs(zHO_out(1,:))**2 -0.5d0*abs(zHO_out(2,:))**2  &
             + conjg(zHO_out(1,:))*zHO_out(2,:) &
             ))
 
 
-    norm = sum( abs(zpsi_in(:,:))**2 ) + 2d0*real( zs_spin* zs_bath)
+    norm = sum( abs(zpsi_out(:,:))**2 ) + 2d0*real( zs_spin* zs_bath)
     
     zpsi_out = zpsi_out/ sqrt(norm)
 
@@ -443,7 +444,7 @@ module CTEF_module
     tSz = abs(zpsi_t(1,1))**2 - abs(zpsi_t(2,1))**2 &
         + abs(zpsi_t(1,2))**2 - abs(zpsi_t(2,2))**2
     zvec(:) = matmul(Sz,zpsi_t(:,2))
-    tSz = tSz + 2d0*real( sum(conjg(zpsi_t(:,1))*zvec(:)) )
+    tSz = tSz + 2d0*real( sum(conjg(zpsi_t(:,1))*zvec(:)) ) 
 
   end subroutine calc_Szt
 !-----------------------------------------------------------------------------------------

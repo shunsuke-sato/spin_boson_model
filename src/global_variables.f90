@@ -38,14 +38,14 @@ module global_variables
 
 
 ! Whole system
-  real(8),parameter :: beta_kB = 5d0/delta_SP !5d0/delta_SP
+  real(8),parameter :: beta_kB = 1d10 !5d0/delta_SP !5d0/delta_SP
 
 ! Parameters for time-propagation
   integer,parameter :: Nt = 500
   real(8),parameter :: Tprop = 20d0/Delta_SP,dt = Tprop/dble(Nt)
 
 ! 
-  integer,parameter :: Ntraj=1000
+  integer,parameter :: Ntraj= 100 !1000
   real(8) :: Szt(0:Nt),Szt_t(0:Nt),Szt_l(0:Nt)
   complex(8) :: zSzt_t(0:Nt)
 
