@@ -35,6 +35,7 @@ module CTEF_module
       real(8) :: norm
       real(8) :: phi0,phi
       complex(8) :: zpsi_stored(2,2), zHO_stored(2,num_HO)
+      complex(8) :: zweight
 
 
       Szt_t=0d0; Szt_l = 0d0
@@ -42,7 +43,7 @@ module CTEF_module
       
       do itraj = 1,Ntraj
         
-        call set_forward_backward_trajectries(zpsi_stored,zHO_stored)
+        call set_forward_backward_trajectries(zpsi_stored,zHO_stored,zweight)
         call random_number(phi0); phi0 = 2d0*pi*phi0
 
         if(mod(itraj,Nprocs) /= myrank)cycle
@@ -60,14 +61,14 @@ module CTEF_module
 
       end do
       call MPI_ALLREDUCE(Szt_l,Szt,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
-      Szt = Szt/Ntraj/Nphi
+      Szt = Szt/(Ntraj*Nphi)
 
       if(myrank == 0)then
         open(nfile_CTEF_Sz,file=file_CTEF_Sz)
         do it = 0,Nt
-          write(nfile_MTEF_Sz,"(999e26.16e3)")dt*it,Szt(it)
+          write(nfile_CTEF_Sz,"(999e26.16e3)")dt*it,Szt(it)
         end do
-        close(nfile_MTEF_Sz)
+        close(nfile_CTEF_Sz)
       end if
 
 
@@ -371,11 +372,12 @@ module CTEF_module
 
   end subroutine refine_effective_hamiltonian
 !-----------------------------------------------------------------------------------------
-  subroutine set_forward_backward_trajectries(zpsi_t,zHO_t)
+  subroutine set_forward_backward_trajectries(zpsi_t,zHO_t,zweight)
     implicit none
-    complex(8),intent(out) :: zpsi_t(2,2), zHO_t(2,Num_HO)
+    complex(8),intent(out) :: zpsi_t(2,2), zHO_t(2,Num_HO), zweight
     integer :: iho
     real(8) :: q1,p1,q2,p2
+    real(8) :: beta_ww, exp_beta_ww
     
     zpsi_t(1,:) = 1d0
     zpsi_t(2,:) = 0d0
@@ -386,6 +388,18 @@ module CTEF_module
       zHO_t(1,iho) = q1 + zI*p1
       zHO_t(2,iho) = q2 + zI*p2
     end do
+
+    zweight = (4d0/3d0)**num_HO
+    do iho = 1, num_ho
+      
+      beta_ww = beta_kB * omega_ho(iho)
+      exp_beta_ww = exp(-beta_ww)
+      zweight = zweight * (1d0-exp_beta_ww)*exp(exp_beta_ww &
+        *conjg(zHO_t(2,iho))*zHO_t(1,iho)) &
+        *exp(0.5d0*abs(zHO_t(1,iho)-zHO_t(2,iho))**2)
+
+    end do
+    
     
   end subroutine set_forward_backward_trajectries
 !-----------------------------------------------------------------------------------------
