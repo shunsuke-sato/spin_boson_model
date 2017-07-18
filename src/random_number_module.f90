@@ -29,12 +29,12 @@ contains
     end if
   end subroutine gaussian_random_number
 !-----------------------------------------------------------------------------------------
-  subroutine correlated_gaussian_random_number(x1,x2,width, normalization_factor)
+  subroutine correlated_gaussian_random_number(x1,x2,width, norm)
     implicit none
     real(8),parameter :: pi = 4d0*atan(1d0)
     real(8), intent(out) :: x1,x2
     real(8),intent(in),optional :: width
-    real(8),intent(out),optional ::normalization_factor
+    real(8),intent(out),optional :: norm
     real(8) :: r1,r2,tmp, sigma
 
     if(present(width))then
@@ -86,8 +86,8 @@ contains
       end do
     end if
 
-    if(present(normalization_factor))then
-      normalization_factor = sqrt(2d0*pi)/ ( &
+    if(present(norm))then
+      norm = sqrt(2d0*pi)/ ( &
         sqrt(1d0+1d0/sigma)*sqrt((sigma+2d0)/(2d0*pi*(sigma+1d0)))&
         )
     end if
