@@ -6,6 +6,7 @@
 module CTEF_module
   use math_module
   use global_variables
+  use random_number_module
   implicit none
 
   private
