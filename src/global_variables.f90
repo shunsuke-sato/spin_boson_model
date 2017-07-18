@@ -9,7 +9,8 @@ module global_variables
   complex(8),parameter :: zI = (0d0,1d0)
 
 ! control parameter
-  character(32) :: calc_mode = 'JFBTS' !'FBTS_mod,' 'FBTS' 'MTEF','PBME','PBME_mod'
+!  character(32) :: calc_mode = 'JFBTS' !'FBTS_mod,' 'FBTS' 'MTEF','PBME','PBME_mod'
+  character(32) :: calc_mode = 'CTEF' !'FBTS_mod,' 'FBTS' 'MTEF','PBME','PBME_mod'
 
 ! Spin
   real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP
@@ -28,7 +29,7 @@ module global_variables
   integer,parameter :: Mjump_FBTS = 100
 
 ! Harmonic oscillator
-  integer,parameter :: Num_HO = 400
+  integer,parameter :: Num_HO = 4 !400
   real(8) :: X_HO(Num_HO),V_HO(Num_HO),a_HO(Num_HO)
   real(8) :: X_HO_old(Num_HO),V_HO_old(Num_HO),a_HO_old(Num_HO)
   real(8) :: X_HO_new(Num_HO),V_HO_new(Num_HO),a_HO_new(Num_HO)
@@ -37,14 +38,14 @@ module global_variables
 
 
 ! Whole system
-  real(8),parameter :: beta_kB = 5d0/delta_SP !5d0/delta_SP
+  real(8),parameter :: beta_kB = 1d10 !5d0/delta_SP !5d0/delta_SP
 
 ! Parameters for time-propagation
-  integer,parameter :: Nt = 500
+  integer,parameter :: Nt = 1 !500
   real(8),parameter :: Tprop = 20d0/Delta_SP,dt = Tprop/dble(Nt)
 
 ! 
-  integer,parameter :: Ntraj=1000
+  integer,parameter :: Ntraj= 100000 !1000
   real(8) :: Szt(0:Nt),Szt_t(0:Nt),Szt_l(0:Nt)
   complex(8) :: zSzt_t(0:Nt)
 
@@ -58,6 +59,9 @@ module global_variables
 ! FBTS
   character(64) :: file_FBTS_Sz="FBTS_Sz.out"
   integer :: nfile_FBTS_Sz=43
+! CTEF
+  character(64) :: file_CTEF_Sz="CTEF_Sz.out"
+  integer :: nfile_CTEF_Sz=44
 
 ! MPI
   include 'mpif.h'

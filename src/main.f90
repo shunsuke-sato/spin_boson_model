@@ -5,6 +5,7 @@
 !---------------------------------------------------!
 program main
   use global_variables
+  use CTEF_module
   implicit none
 
   call initialize_mpi
@@ -12,6 +13,8 @@ program main
   select case(calc_mode)
   case('MTEF')
     call MTEF
+  case('CTEF')
+    call CTEF
   case('PBME','PBME_mod')
     call PBME
   case('FBTS','FBTS_mod','FBTS_approx','JFBTS')

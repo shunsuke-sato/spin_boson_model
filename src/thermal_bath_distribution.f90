@@ -5,6 +5,7 @@
 !---------------------------------------------------!
 subroutine thermal_bath_distribution
   use global_variables
+  use random_number_module
   implicit none
   real(8) :: alpha,x1,x2
   integer :: j

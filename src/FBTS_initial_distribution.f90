@@ -5,6 +5,7 @@
 !---------------------------------------------------!
 subroutine FBTS_initial_distribution
   use global_variables
+  use random_number_module
   implicit none
   real(8) :: xx,pp
 
