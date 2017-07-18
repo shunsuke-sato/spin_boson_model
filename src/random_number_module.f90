@@ -87,7 +87,9 @@ contains
     end if
 
     if(present(normalization_factor))then
-      normalization_factor = (1d0+1d0/sigma)*((sigma+2d0)/(2d0*pi*(sigma+1d0)))/(2d0*pi)
+      normalization_factor = sqrt(2d0*pi)/ ( &
+        sqrt(1d0+1d0/sigma)*sqrt((sigma+2d0)/(2d0*pi*(sigma+1d0)))&
+        )
     end if
     
   end subroutine correlated_gaussian_random_number
