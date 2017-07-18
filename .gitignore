@@ -1,29 +1,17 @@
 # Log files
 *.out
-*.optrpt
 *.log
 *.dat
-
-# Executable binaries
-spin-boson
-
-# temporary namelist
-*.tmp
-
-
-######################################################
-# Created by https://www.gitignore.io/api/c,cmake,fortran
-
-### C ###
-# Prerequisites
-*.d
+*~
 
 # Object files
 *.o
 
-# Precompiled Headers
-*.gch
-*.pch
+# Module files
+*.mod
+
+# Executable files
+spin-boson
 
 # Libraries
 *.lib
@@ -31,20 +19,14 @@ spin-boson
 *.la
 *.lo
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
-
-
-# Fortran module files
-*.mod
-*.smod
-
-# Executables
-
+### CMake ###
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
 
