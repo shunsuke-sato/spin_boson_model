@@ -11,7 +11,7 @@ module CTEF_module
 
   private
 ! phase average
-  integer,parameter :: Nphi = 2
+  integer,parameter :: Nphi = 4
 ! spin
   complex(8) :: zpsi_CTEF(2,2)
 ! Harmonic oscillator 
@@ -379,28 +379,32 @@ module CTEF_module
     integer :: iho
     real(8) :: q1,p1,q2,p2
     real(8) :: beta_ww, exp_beta_ww
+    real(8) :: sigma, norm
+
+    sigma = 1.0d0!2d0/sqrt(dble(num_HO))
     
     zpsi_t(1,:) = 1d0
     zpsi_t(2,:) = 0d0
-      
+    
     do iho = 1,num_HO
-      call correlated_gaussian_random_number(q1,q2)
-      call correlated_gaussian_random_number(p1,p2)
+      call correlated_gaussian_random_number(q1,q2,width=sigma)
+      call correlated_gaussian_random_number(p1,p2,width=sigma)
       zHO_t(1,iho) = q1 + zI*p1
       zHO_t(2,iho) = q2 + zI*p2
     end do
+    call correlated_gaussian_random_number(p1,p2,width=sigma,norm=norm)
+!    write(*,*)"norm=",norm
 
-    zweight = (4d0/3d0)**num_HO
+    zweight = 1d0
     do iho = 1, num_ho
       
       beta_ww = beta_kB * omega_ho(iho)
       exp_beta_ww = exp(-beta_ww)
-      zweight = zweight * (1d0-exp_beta_ww)*exp(exp_beta_ww &
+      zweight = zweight *(norm/pi)**2* (1d0-exp_beta_ww)*exp(exp_beta_ww &
         *conjg(zHO_t(2,iho))*zHO_t(1,iho)) &
-        *exp(0.5d0*abs(zHO_t(1,iho)-zHO_t(2,iho))**2)
-
+        *exp(0.5d0/sigma*abs(zHO_t(1,iho)-zHO_t(2,iho))**2)
     end do
-
+!    if(myrank == 0)write(*,*)"zweight0=",zweight
     
   end subroutine set_forward_backward_trajectries
 !-----------------------------------------------------------------------------------------

@@ -29,7 +29,7 @@ module global_variables
   integer,parameter :: Mjump_FBTS = 100
 
 ! Harmonic oscillator
-  integer,parameter :: Num_HO = 400
+  integer,parameter :: Num_HO = 1 !400
   real(8) :: X_HO(Num_HO),V_HO(Num_HO),a_HO(Num_HO)
   real(8) :: X_HO_old(Num_HO),V_HO_old(Num_HO),a_HO_old(Num_HO)
   real(8) :: X_HO_new(Num_HO),V_HO_new(Num_HO),a_HO_new(Num_HO)
@@ -41,11 +41,11 @@ module global_variables
   real(8),parameter :: beta_kB = 1d10 !5d0/delta_SP !5d0/delta_SP
 
 ! Parameters for time-propagation
-  integer,parameter :: Nt = 500
+  integer,parameter :: Nt = 1 !500
   real(8),parameter :: Tprop = 20d0/Delta_SP,dt = Tprop/dble(Nt)
 
 ! 
-  integer,parameter :: Ntraj= 100 !1000
+  integer,parameter :: Ntraj= 100000 !1000
   real(8) :: Szt(0:Nt),Szt_t(0:Nt),Szt_l(0:Nt)
   complex(8) :: zSzt_t(0:Nt)
 
