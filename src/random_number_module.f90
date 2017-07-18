@@ -29,30 +29,66 @@ contains
     end if
   end subroutine gaussian_random_number
 !-----------------------------------------------------------------------------------------
-  subroutine correlated_gaussian_random_number(x1,x2)
+  subroutine correlated_gaussian_random_number(x1,x2,width, normalization_factor)
     implicit none
     real(8),parameter :: pi = 4d0*atan(1d0)
     real(8), intent(out) :: x1,x2
-    real(8) :: r1,r2,tmp
+    real(8),intent(in),optional :: width
+    real(8),intent(out),optional ::normalization_factor
+    real(8) :: r1,r2,tmp, sigma
 
-    do 
-      call random_number(r1)
-      call random_number(r2)
+    if(present(width))then
+      sigma = width
+    else
+      sigma = 1d0
+    end if
+
+    if(sigma >= 1d0)then
+
+      do 
+        call random_number(r1)
+        call random_number(r2)
       
-      if(r1 == 0d0)then
-        x1 = 0d0
-        x2 = 0d0
-      else 
-        tmp = sqrt(-2d0*log(r1))
-        x1 = tmp*cos(2d0*pi*r2)
-        x2 = tmp*sin(2d0*pi*r2)
-      end if
+        if(r1 == 0d0)then
+          x1 = 0d0
+          x2 = 0d0
+        else 
+          tmp = sqrt(-2d0*log(r1))
+          x1 = tmp*cos(2d0*pi*r2)
+          x2 = tmp*sin(2d0*pi*r2)
+        end if
       
-      tmp = x1 -x2
-      r1 = exp(-0.5d0*tmp**2)
-      call random_number(r2)
-      if(r2 < r1)exit
-    end do
+        tmp = x1 -x2
+        r1 = exp(-0.5d0*tmp**2/sigma)
+        call random_number(r2)
+        if(r2 < r1)exit
+      end do
+
+    else
+
+      do 
+        call random_number(r1)
+        call random_number(r2)
+      
+        if(r1 == 0d0)then
+          x1 = 0d0
+          x2 = 0d0
+        else 
+          tmp = sqrt(-2d0*log(r1))
+          x1 = tmp*cos(2d0*pi*r2)
+          x2 = tmp*sin(2d0*pi*r2)
+        end if
+      
+        x2 = x1 + x2*sqrt(sigma)
+        r1 = exp(-0.5d0*x2**2)
+        call random_number(r2)
+        if(r2 < r1)exit
+      end do
+    end if
+
+    if(present(normalization_factor))then
+      normalization_factor = (1d0+1d0/sigma)*((sigma+2d0)/(2d0*pi*(sigma+1d0)))/(2d0*pi)
+    end if
     
   end subroutine correlated_gaussian_random_number
 !-----------------------------------------------------------------------------------------  
