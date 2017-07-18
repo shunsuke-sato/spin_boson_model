@@ -381,7 +381,7 @@ module CTEF_module
     real(8) :: beta_ww, exp_beta_ww
     real(8) :: sigma, norm
 
-    sigma = 1.0d0!2d0/sqrt(dble(num_HO))
+    sigma = 1d0/sqrt(dble(num_HO))
     
     zpsi_t(1,:) = 1d0
     zpsi_t(2,:) = 0d0
@@ -449,7 +449,7 @@ module CTEF_module
     tSz = abs(zpsi_t(1,1))**2 - abs(zpsi_t(2,1))**2 &
         + abs(zpsi_t(1,2))**2 - abs(zpsi_t(2,2))**2
     zvec(:) = matmul(Sz,zpsi_t(:,2))
-    tSz = tSz + 2d0*real( sum(conjg(zpsi_t(:,1))*zvec(:)) ) 
+    tSz = tSz + 2d0*real( sum(conjg(zpsi_t(:,1))*zvec(:))*zs ) 
 
   end subroutine calc_Szt
 !-----------------------------------------------------------------------------------------
