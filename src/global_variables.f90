@@ -29,7 +29,7 @@ module global_variables
   integer,parameter :: Mjump_FBTS = 100
 
 ! Harmonic oscillator
-  integer,parameter :: Num_HO = 4 !400
+  integer,parameter :: Num_HO = 10 !400
   real(8) :: X_HO(Num_HO),V_HO(Num_HO),a_HO(Num_HO)
   real(8) :: X_HO_old(Num_HO),V_HO_old(Num_HO),a_HO_old(Num_HO)
   real(8) :: X_HO_new(Num_HO),V_HO_new(Num_HO),a_HO_new(Num_HO)
