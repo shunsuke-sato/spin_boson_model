@@ -17,6 +17,7 @@ module global_variables
   complex(8) :: zpsi(2)
   real(8),parameter :: Sz(2,2) = reshape( (/1d0, 0d0, 0d0, -1d0/), (/2,2/) )
   real(8),parameter :: Sx(2,2) = reshape( (/0d0, 1d0, 1d0, 0d0/), (/2,2/) )
+  real(8),parameter :: hs_m(2,2) = reshape( (/eps_SP, delta_SP, delta_SP, eps_SP/), (/2,2/) )
   real(8) :: H_spin(2,2)
 
 ! Spin-Boson model parameters
