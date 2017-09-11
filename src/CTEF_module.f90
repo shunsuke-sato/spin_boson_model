@@ -19,12 +19,15 @@ module CTEF_module
   complex(8) :: ZHO_dot_CTEF(2,Num_HO)
 !
   complex(8) :: zHs_CTEF(2,2,2,2)
+  complex(8) :: zSzs_CTEF(2,2)
   complex(8) :: zDs_CTEF(2,2), zSs_CTEF(2,2)
   complex(8) :: zSs_inv_CTEF(2,2)
 
   complex(8) :: zDb_CTEF(2,2), zSb_CTEF(2,2)
   complex(8) :: zSb_inv_CTEF(2,2)
   complex(8) :: zHb_CTEF(2,2),zFb_CTEF(2)
+
+  complex(8) :: zSsb_CTEF(2,2)
 
   public :: CTEF
 
@@ -37,9 +40,11 @@ module CTEF_module
       real(8) :: phi0,phi
       complex(8) :: zpsi_stored(2,2), zHO_stored(2,num_HO)
       complex(8) :: zweight
+      real(8) :: Szt_c(0:Nt),norm_c(0:Nt),Eb_c(0:Nt),Ec_c(0:Nt)
+      real(8) :: Szt_cl(0:Nt),norm_cl(0:Nt),Eb_cl(0:Nt),Ec_cl(0:Nt)
+      real(8) :: Szt_ct(0:Nt),norm_ct(0:Nt),Eb_ct(0:Nt),Ec_ct(0:Nt)
 
-
-      Szt_t=0d0; Szt_l = 0d0
+      Szt_cl=0d0; norm_cl=0d0;Eb_cl=0d0;Ec_cl=0d0
       call setting_bath_parameters
       
       do itraj = 1,Ntraj
@@ -55,19 +60,33 @@ module CTEF_module
           call set_initial_condition(zpsi_stored,zHO_stored, &
                                      zpsi_CTEF,  zHO_CTEF, phi, norm)
 
-          call CTEF_dynamics
-          Szt_l = Szt_l + Szt_t*norm*exp(-zI*phi)*zweight
+          call CTEF_dynamics(Szt_ct, norm_ct, Eb_ct, Ec_ct)
+          Szt_cl  = Szt_cl  + norm*exp(-zI*phi)*zweight*Szt_ct
+          norm_cl = norm_cl + norm*exp(-zI*phi)*zweight*norm_ct
+          Eb_cl   = Eb_cl   + norm*exp(-zI*phi)*zweight*Eb_ct
+          Ec_cl   = Ec_cl   + norm*exp(-zI*phi)*zweight*Ec_ct
+
 
         end do
 
       end do
-      call MPI_ALLREDUCE(Szt_l,Szt,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
-      Szt = Szt/(Ntraj*Nphi)
+
+      Szt_cl  = Szt_cl/(Ntraj*Nphi)
+      norm_cl = norm_cl/(Ntraj*Nphi)
+      Eb_cl   = Eb_cl/(Ntraj*Nphi)
+      Ec_cl   = Ec_cl/(Ntraj*Nphi)
+      call MPI_ALLREDUCE(Szt_cl,Szt_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
+      call MPI_ALLREDUCE(norm_cl,norm_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
+      call MPI_ALLREDUCE(Eb_cl,Eb_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
+      call MPI_ALLREDUCE(Ec_cl,Ec_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
 
       if(myrank == 0)then
         open(nfile_CTEF_Sz,file=file_CTEF_Sz)
         do it = 0,Nt
-          write(nfile_CTEF_Sz,"(999e26.16e3)")dt*it,Szt(it)
+          write(nfile_CTEF_Sz,"(999e26.16e3)")dt*it,norm_c(it), &
+                                                    Szt_c(it),  &
+                                                    Eb_c(it),   &
+                                                    Ec_c(it) 
         end do
         close(nfile_CTEF_Sz)
       end if
@@ -75,28 +94,34 @@ module CTEF_module
 
     end subroutine CTEF
 !-----------------------------------------------------------------------------------------
-    subroutine CTEF_dynamics
+    subroutine CTEF_dynamics(Szt_ct, norm_ct, Eb_ct, Ec_ct)
 ! Assuming zpsi_CTEF and zHO_CTEF are given 
       implicit none
+      real(8),intent(out) :: Szt_ct(0:Nt),norm_ct(0:Nt),Eb_ct(0:Nt),Ec_ct(0:Nt)
       real(8) :: Sz_av
       integer :: it
       real(8) :: X_Cint_av
       complex(8) :: zpsi_t(2,2),zhpsi_t(2,2)
 
       
-      Szt_t = 0d0 ! zero clear
+      Szt_ct   = 0d0
+      norm_ct  = 0d0
+      Eb_ct    = 0d0
+      Ec_ct    = 0d0
 
-      call calc_Szt(Szt_t(0),zpsi_CTEF, zHO_CTEF)
+
+
       zHO_dot_CTEF = 0d0
       call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+      call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+      call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+      call calc_output(norm_ct(0),Szt_ct(0),Eb_ct(0),Ec_ct(0))
 
       do it = 0,Nt-1
 
-
         call dt_evolve_etrs(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
-        call calc_Szt(Szt_t(it+1),zpsi_CTEF, zHO_CTEF)
+        call calc_output(norm_ct(it-1),Szt_ct(it-1),Eb_ct(it-1),Ec_ct(it-1))
 
-        
       end do
 
 
@@ -236,22 +261,26 @@ module CTEF_module
       integer :: iter
       integer :: i,j
 
-      zs_ab(1,1) = 1d0
-      zs_ab(2,2) = 1d0
-      zs_ab(1,2) = sum(conjg(zpsi_t(:,1))*zpsi_t(:,2))
-      zs_ab(2,1) = conjg(zs_ab(1,2))
+! zSs
+      zSs_CTEF(1,1) = sum(abs(zpsi_t(:,1))**2)
+      zSs_CTEF(2,1) = sum(conjg(zpsi_t(:,2))*zpsi_t(:,1))
+      zSs_CTEF(1,2) = sum(conjg(zpsi_t(:,1))*zpsi_t(:,2))
+      zSs_CTEF(2,2) = sum(abs(zpsi_t(:,1))**2)
 
-      zs_cd(1,1) = 1d0
-      zs_cd(2,2) = 1d0
-      zs_cd(1,2) = exp(sum(&
+! zSb
+      zSb_CTEF(1,1) = 1d0
+      zSb_CTEF(2,2) = 1d0
+      zSb_CTEF(1,2) = exp(sum(&
             -0.5d0*abs(zHO_t(1,:))**2 -0.5d0*abs(zHO_t(2,:))**2  &
             + conjg(zHO_t(1,:))*zHO_t(2,:) &
             ))
-      zs_cd(2,1) = conjg(zs_cd(1,2))
+      zSb_CTEF(2,1) = conjg(zSb_CTEF(1,2))
 
-! partially prepare spin-Hamiltonian
-      zSs_CTEF(:,:) = zs_ab(:,:)
-      call inverse_2x2_matrix(zSs_CTEF,zSs_inv_CTEF)
+      call inverse_2x2_matrix(zSb_CTEF,zSb_inv_CTEF)
+
+      zSsb_CTEF = zSs_CTEF*zSb_CTEF
+      call inverse_2x2_matrix(zSsb_CTEF,zSsb_inv_CTEF)
+
 
       do i = 1,2
         do j =1,2
@@ -452,5 +481,15 @@ module CTEF_module
 
   end subroutine calc_Szt
 !-----------------------------------------------------------------------------------------
+  subroutine calc_output(norm_ct0,Szt_ct0,Eb_ct0,Ec_ct0)
+    implicit none
+    real(8),intent(out) :: Szt_ct0,norm_ct0,Eb_ct0,Ec_ct0
+
+    norm_ct0 = sum(zSsb_CTEF(1,1))
+    Szt_ct0  = sum(zSzs_CTEF*zSb_CTEF)
+    Eb_ct0   = sum(zSs_CTEF*zHb_CTEF)
+    Ec_ct0 = 0d0 ! to be implemented!!
+
+  end subroutine calc_output
 !-----------------------------------------------------------------------------------------
 end module CTEF_module
