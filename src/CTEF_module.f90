@@ -214,32 +214,33 @@ module CTEF_module
       complex(8) :: zhpsi_s(2,2)
       real(8) :: det
 
-      zhpsi_s(:,1) = zDs_CTEF(1,1)*zpsi_t(:,1) + zDs_CTEF(1,2)*zpsi_t(:,2)
-      zhpsi_s(:,2) = zDs_CTEF(2,1)*zpsi_t(:,1) + zDs_CTEF(2,2)*zpsi_t(:,2)
 
-      zhpsi_s(1,1) = zhpsi_s(1,1) + zHs_CTEF(1,1,1,1)*zpsi_t(1,1) &
-                                  + zHs_CTEF(1,2,1,1)*zpsi_t(2,1) &
-                                  + zHs_CTEF(1,1,1,2)*zpsi_t(1,2) &
-                                  + zHs_CTEF(1,2,1,2)*zpsi_t(2,2) 
+      zhpsi_s(1,1) =  zHs_CTEF(1,1,1,1)*zpsi_t(1,1) &
+                    + zHs_CTEF(1,2,1,1)*zpsi_t(2,1) &
+                    + zHs_CTEF(1,1,1,2)*zpsi_t(1,2) &
+                    + zHs_CTEF(1,2,1,2)*zpsi_t(2,2) 
 
-      zhpsi_s(2,1) = zhpsi_s(2,1) + zHs_CTEF(2,1,1,1)*zpsi_t(1,1) &
-                                  + zHs_CTEF(2,2,1,1)*zpsi_t(2,1) &
-                                  + zHs_CTEF(2,1,1,2)*zpsi_t(1,2) &
-                                  + zHs_CTEF(2,2,1,2)*zpsi_t(2,2) 
+      zhpsi_s(2,1) =  zHs_CTEF(2,1,1,1)*zpsi_t(1,1) &
+                    + zHs_CTEF(2,2,1,1)*zpsi_t(2,1) &
+                    + zHs_CTEF(2,1,1,2)*zpsi_t(1,2) &
+                    + zHs_CTEF(2,2,1,2)*zpsi_t(2,2) 
 
-      zhpsi_s(1,2) = zhpsi_s(1,2) + zHs_CTEF(1,1,2,1)*zpsi_t(1,1) &
-                                  + zHs_CTEF(1,2,2,1)*zpsi_t(2,1) &
-                                  + zHs_CTEF(1,1,2,2)*zpsi_t(1,2) &
-                                  + zHs_CTEF(1,2,2,2)*zpsi_t(2,2) 
+      zhpsi_s(1,2) =  zHs_CTEF(1,1,2,1)*zpsi_t(1,1) &
+                    + zHs_CTEF(1,2,2,1)*zpsi_t(2,1) &
+                    + zHs_CTEF(1,1,2,2)*zpsi_t(1,2) &
+                    + zHs_CTEF(1,2,2,2)*zpsi_t(2,2) 
 
-      zhpsi_s(2,2) = zhpsi_s(2,2) + zHs_CTEF(2,1,2,1)*zpsi_t(1,1) &
-                                  + zHs_CTEF(2,2,2,1)*zpsi_t(2,1) &
-                                  + zHs_CTEF(2,1,2,2)*zpsi_t(1,2) &
-                                  + zHs_CTEF(2,2,2,2)*zpsi_t(2,2) 
+      zhpsi_s(2,2) =  zHs_CTEF(2,1,2,1)*zpsi_t(1,1) &
+                    + zHs_CTEF(2,2,2,1)*zpsi_t(2,1) &
+                    + zHs_CTEF(2,1,2,2)*zpsi_t(1,2) &
+                    + zHs_CTEF(2,2,2,2)*zpsi_t(2,2) 
 
 
-      zhpsi_t(:,1) = zSs_inv_CTEF(1,1)*zhpsi_s(:,1) + zSs_inv_CTEF(1,2)*zhpsi_s(:,2)
-      zhpsi_t(:,2) = zSs_inv_CTEF(2,1)*zhpsi_s(:,1) + zSs_inv_CTEF(2,2)*zhpsi_s(:,2)
+      zhpsi_s(:,1) = zhpsi_s(:,1) - zDb_CTEF(1,1)*zpsi_t(:,1) - zDb_CTEF(1,2)*zpsi_t(:,2)
+      zhpsi_s(:,2) = zhpsi_s(:,2) - zDb_CTEF(2,1)*zpsi_t(:,1) - zDb_CTEF(2,2)*zpsi_t(:,2)
+
+      zhpsi_t(:,1) = zSb_inv_CTEF(1,1)*zhpsi_s(:,1) + zSb_inv_CTEF(1,2)*zhpsi_s(:,2)
+      zhpsi_t(:,2) = zSb_inv_CTEF(2,1)*zhpsi_s(:,1) + zSb_inv_CTEF(2,2)*zhpsi_s(:,2)
 
 
     end subroutine zhpsi_CTEF
@@ -331,59 +332,31 @@ module CTEF_module
       end do
 
 
-! implementing here!!
-
-
-      zvec(:) = matmul(zHs_CTEF(:,:,1,2),zpsi_t(:,2))
-      zs = sum(conjg(zpsi_t(:,1))*zvec(:))
-      zHb_CTEF(1,1) = -real(zs)
-      zHb_CTEF(1,2) = zs
-      zvec(:) = matmul(zHs_CTEF(:,:,2,1),zpsi_t(:,1))
-      zs = sum(conjg(zpsi_t(:,2))*zvec(:))
-      zHb_CTEF(2,2) = -real(zs)
-      zHb_CTEF(2,1) = zs
-
-      zvec(:) = matmul(Sz(:,:),zpsi_t(:,1))
-      zSz_ab(1,1) = sum(conjg(zpsi_t(:,1))*zvec(:))
-      zSz_ab(2,1) = sum(conjg(zpsi_t(:,2))*zvec(:))
-      zSz_ab(1,2) = conjg(zSz_ab(2,1) )
-      zvec(:) = matmul(Sz(:,:),zpsi_t(:,2))
-      zSz_ab(2,2) = sum(conjg(zpsi_t(:,2))*zvec(:))
-
-      zFb_CTEF(1) = zSz_ab(1,1) + zSz_ab(1,2)*zs_cd(1,2)
-      zFb_CTEF(2) = zSz_ab(2,2) + zSz_ab(2,1)*zs_cd(2,1)
-
       do iter = 1,Nscf_CTEF
 
 
-        zd_cd(1,1) = 0.5d0*sum(conjg(zHO_t(1,:))*zHO_dot_t(1,:) &
-          - conjg(zHO_dot_t(1,:))*zHO_t(1,:))
+        zDb_CTEF(1,1) = real( 0.5d0*zI*sum(conjg(zHO_t(:,1))*zHO_dot_t(:,1) &
+          -conjg(zHO_dot_t(:,1))*zHO_t(:,1) ) )
+        zDb_CTEF(2,2) = real( 0.5d0*zI*sum(conjg(zHO_in(:,2))*zHO_dot_t(:,2) &
+          -conjg(zHO_dot_t(:,2))*zHO_t(:,2) ) )
+        zDb_CTEF(1,2) = zI*sum(-0.5d0*( &
+          conjg(zHO_dot_t(:,2))*zHO_t(:,2) &
+          +zHO_dot_t(:,2)*conjg(zHO_t(:,2)) ) &
+          +conjg(zHO_t(:,1))*zHO_dot_t(:,2) )*zSb_CTEF(1,2)
+        zDb_CTEF(2,1) = zI*sum(-0.5d0*( &
+          conjg(zHO_dot_t(:,1))*zHO_t(:,1) &
+          +zHO_dot_t(:,1)*conjg(zHO_t(:,1)) ) &
+          +conjg(zHO_t(:,2))*zHO_dot_t(:,1) )*zSb_CTEF(2,1)
 
-        zd_cd(2,1) = sum(-0.5d0*(conjg(zHO_t(1,:))*zHO_dot_t(1,:) &
-                               + conjg(zHO_dot_t(1,:))*zHO_t(1,:) ) &
-                               +conjg(zHO_t(2,:))*zHO_dot_t(1,:) )
 
-        zd_cd(1,2) = sum(-0.5d0*(conjg(zHO_t(2,:))*zHO_dot_t(2,:) &
-                               + conjg(zHO_dot_t(2,:))*zHO_t(2,:) ) &
-                               +conjg(zHO_t(1,:))*zHO_dot_t(2,:) )
-
-        zd_cd(2,2) = 0.5d0*sum(conjg(zHO_t(2,:))*zHO_dot_t(2,:) &
-          - conjg(zHO_dot_t(2,:))*zHO_t(2,:))
-
-        zd_cd = zd_cd * zs_cd
-
-! partially prepare spin-Hamiltonian
-        zDs_CTEF(1,1) = real(zI*zd_cd(1,1))
-        zDs_CTEF(1,2) = zI*zd_cd(1,2)
-        zDs_CTEF(2,1) = zI*zd_cd(2,1)
-        zDs_CTEF(2,2) = real(zI*zd_cd(2,2))
-
+! implementing here
         call zhpsi_CTEF(zpsi_t,zhpsi_t)
 
-        zd_ab(1,1) = sum( conjg(zpsi_t(:,1))*zhpsi_t(:,1)/zI )
-        zd_ab(1,2) = sum( conjg(zpsi_t(:,1))*zhpsi_t(:,2)/zI )
-        zd_ab(2,1) = sum( conjg(zpsi_t(:,2))*zhpsi_t(:,1)/zI )
-        zd_ab(2,2) = sum( conjg(zpsi_t(:,2))*zhpsi_t(:,2)/zI )
+        zDs_CTEF(1,1) = sum( conjg(zpsi_t(:,1))*zhpsi_t(:,1) )
+        zDs_CTEF(2,2) = sum( conjg(zpsi_t(:,2))*zhpsi_t(:,2) )
+        zDs_CTEF(1,2) = sum( conjg(zpsi_t(:,1))*zhpsi_t(:,2) )
+        zDs_CTEF(2,1) = sum( conjg(zpsi_t(:,2))*zhpsi_t(:,1) )
+
 
 ! partially prepare spin-Hamiltonian
         zDb_CTEF(1,1) = zi*real(zd_ab(1,1)) &
@@ -395,38 +368,28 @@ module CTEF_module
 
 
         do iho = 1,Num_HO
-          zHb_tot_t = zHb_CTEF-zDb_CTEF
-          zHb_tot_t(1,1) = zHb_tot_t(1,1) + omega_HO(iho)
-          zHb_tot_t(2,2) = zHb_tot_t(2,2) + omega_HO(iho)
-          zHO_dot_t(:,iho) = matmul(zHb_tot_t,zHO_t(:,iho)) &
-            -sqrt(0.5d0/(M_HO*omega_HO(iho)))*zFb_CTEF(:)
+          zHb_tot_t = omega_HO(iho)*zSsb_CTEF
+          zHb_tot_t(1,1) = zHb_tot_t(1,1) - zi*real(zDs_CTEF(1,1)/zI) &
+            + real(zDs_CTEF(1,2)*zSb_CTEF(1,2) + zSs_CTEF(1,2)*zDb_CTEF(1,2)) &
+            - real(zEs_CTEF(1,2)*zSb_CTEF(1,2) + zEc_CTEF(1,2) + zSs_CTEF(1,2)*zEb_CTEF(1,2))
+
+          zHb_tot_t(2,2) = zHb_tot_t(2,2) - zi*real(zDs_CTEF(2,2)/zI) &
+            + real(zDs_CTEF(2,1)*zSb_CTEF(2,1) + zSs_CTEF(2,1)*zDb_CTEF(2,1)) &
+            - real(zEs_CTEF(2,1)*zSb_CTEF(2,1) + zEc_CTEF(2,1) + zSs_CTEF(2,1)*zEb_CTEF(2,1))
+
+          zHb_tot_t(1,2) = zHb_tot_t(1,2) &
+            -zDs_CTEF(1,2)*zSb_CTEF(1,2) - zSs_CTEF(1,2)*zDb_CTEF(1,2) &
+            + zEs_CTEF(1,2)*zSb_CTEF(1,2) + zEc_CTEF(1,2) + zSs_CTEF(1,2)*zEb_CTEF(1,2)
+
+          zHb_tot_t(2,1) = zHb_tot_t(2,1) &
+            -zDs_CTEF(2,1)*zSb_CTEF(2,1) - zSs_CTEF(2,1)*zDb_CTEF(2,1) &
+            + zEs_CTEF(2,1)*zSb_CTEF(2,1) + zEc_CTEF(2,1) + zSs_CTEF(2,1)*zEb_CTEF(2,1)
+
+          zHO_dot_t(:,iho) = matmul(zHb_tot_t,zHO_t(:,iho)) + zFb_CTEF(:)
         end do
-        zHO_dot_t = matmul(zSb_inv_CTEF,zHO_dot_t)/zI
+        zHO_dot_t = matmul(zSs_inv_CTEF,zHO_dot_t)/zI
 
       end do
-
-
-! partially prepare spin-Hamiltonian
-        zDs_CTEF(1,1) = real(zI*zd_cd(1,1))
-        zDs_CTEF(1,2) = zI*zd_cd(1,2)
-        zDs_CTEF(2,1) = zI*zd_cd(2,1)
-        zDs_CTEF(2,2) = real(zI*zd_cd(2,2))
-
-        call zhpsi_CTEF(zpsi_t,zhpsi_t)
-
-        zd_ab(1,1) = sum( conjg(zpsi_t(:,1))*zhpsi_t(:,1)/zI )
-        zd_ab(1,2) = sum( conjg(zpsi_t(:,1))*zhpsi_t(:,2)/zI )
-        zd_ab(2,1) = sum( conjg(zpsi_t(:,2))*zhpsi_t(:,1)/zI )
-        zd_ab(2,2) = sum( conjg(zpsi_t(:,2))*zhpsi_t(:,2)/zI )
-
-! partially prepare spin-Hamiltonian
-        zDb_CTEF(1,1) = zi*real(zd_ab(1,1)) &
-          - real(zI*zd_ab(1,2)*zs_cd(1,2) + zI*zs_ab(1,2)*zd_cd(1,2))
-        zDb_CTEF(1,2) = zI*zd_ab(1,2)*zs_cd(1,2) + zI*zs_ab(1,2)*zd_cd(1,2)
-        zDb_CTEF(2,1) = zI*zd_ab(2,1)*zs_cd(2,1) + zI*zs_ab(2,1)*zd_cd(2,1)
-        zDb_CTEF(2,2) = zi*real(zd_ab(2,2)) &
-          - real(zI*zd_ab(2,1)*zs_cd(2,1) + zI*zs_ab(2,1)*zd_cd(2,1))
-
 
   end subroutine refine_effective_hamiltonian
 !-----------------------------------------------------------------------------------------
