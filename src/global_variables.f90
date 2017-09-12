@@ -17,7 +17,7 @@ module global_variables
   complex(8) :: zpsi(2)
   real(8),parameter :: Sz(2,2) = reshape( (/1d0, 0d0, 0d0, -1d0/), (/2,2/) )
   real(8),parameter :: Sx(2,2) = reshape( (/0d0, 1d0, 1d0, 0d0/), (/2,2/) )
-  real(8),parameter :: hs_m(2,2) = reshape( (/eps_SP, delta_SP, delta_SP, eps_SP/), (/2,2/) )
+  real(8),parameter :: hs_m(2,2) = reshape( (/eps_SP, delta_SP, delta_SP, -eps_SP/), (/2,2/) )
   real(8) :: H_spin(2,2)
 
 ! Spin-Boson model parameters
@@ -30,7 +30,7 @@ module global_variables
   integer,parameter :: Mjump_FBTS = 100
 
 ! Harmonic oscillator
-  integer,parameter :: Num_HO = 10 !400
+  integer,parameter :: Num_HO = 6 !400
   real(8) :: X_HO(Num_HO),V_HO(Num_HO),a_HO(Num_HO)
   real(8) :: X_HO_old(Num_HO),V_HO_old(Num_HO),a_HO_old(Num_HO)
   real(8) :: X_HO_new(Num_HO),V_HO_new(Num_HO),a_HO_new(Num_HO)
