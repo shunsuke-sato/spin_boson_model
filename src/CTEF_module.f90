@@ -15,8 +15,8 @@ module CTEF_module
 ! spin
   complex(8) :: zpsi_CTEF(2,2)
 ! Harmonic oscillator 
-  complex(8) :: ZHO_CTEF(2,Num_HO)
-  complex(8) :: ZHO_dot_CTEF(2,Num_HO)
+  complex(8) :: ZHO_CTEF(Num_HO,2)
+  complex(8) :: ZHO_dot_CTEF(Num_HO,2)
 !
   complex(8) :: zHs_CTEF(2,2,2,2)
   complex(8) :: zSzs_CTEF(2,2), zEs_CTEF(2,2)
@@ -25,7 +25,7 @@ module CTEF_module
 
   complex(8) :: zDb_CTEF(2,2), zSb_CTEF(2,2)
   complex(8) :: zSb_inv_CTEF(2,2)
-  complex(8) :: zHb_CTEF(2,2),zFb_CTEF(2,Num_HO)
+  complex(8) :: zHb_CTEF(2,2),zFb_CTEF(Num_HO,2)
   complex(8) :: zXb_cint_CTEF(2,2),zEb_CTEF(2,2)
 
   complex(8) :: zSsb_CTEF(2,2), zSsb_inv_CTEF(2,2), zEc_CTEF(2,2)
@@ -39,7 +39,7 @@ module CTEF_module
       integer :: itraj,it,iphi
       real(8) :: norm
       real(8) :: phi0,phi
-      complex(8) :: zpsi_stored(2,2), zHO_stored(2,num_HO)
+      complex(8) :: zpsi_stored(2,2), zHO_stored(num_HO,2)
       complex(8) :: zweight
       real(8) :: Szt_c(0:Nt),norm_c(0:Nt),Eb_c(0:Nt),Ec_c(0:Nt)
       real(8) :: Szt_cl(0:Nt),norm_cl(0:Nt),Eb_cl(0:Nt),Ec_cl(0:Nt)
@@ -127,8 +127,8 @@ module CTEF_module
 !-----------------------------------------------------------------------------------------
     subroutine dt_evolve_etrs(zpsi_t,zHO_t, zHO_dot_t)
       implicit none
-      complex(8),intent(inout) :: zpsi_t(2,2),zHO_t(2,Num_HO),zHO_dot_t(2,Num_HO)
-      complex(8) :: zpsi_s(2,2),zHO_s(2,Num_HO),zHO_dot_s(2,Num_HO)
+      complex(8),intent(inout) :: zpsi_t(2,2),zHO_t(Num_HO,2),zHO_dot_t(Num_HO,2)
+      complex(8) :: zpsi_s(2,2),zHO_s(Num_HO,2),zHO_dot_s(Num_HO,2)
       complex(8) :: zpsi_tmp(2,2),zhpsi_tmp(2,2)
       integer,parameter :: Npred_corr = 2
       integer :: ipred_corr
@@ -136,7 +136,7 @@ module CTEF_module
 ! propagation: t => t + dt/2
       call dt_evolve_spin_Taylor(zpsi_t,0.5d0*dt)
       call dt_evolve_bath_direct(zHO_t, zHO_dot_t, 0.5d0*dt)
-      call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+      call refine_effective_hamiltonian(zpsi_t,zHO_t, zHO_dot_t)
       zpsi_s = zpsi_t
       zHO_s = zHO_t
 
@@ -147,7 +147,7 @@ module CTEF_module
         call dt_evolve_spin_Taylor(zpsi_t,0.5d0*dt)
         call dt_evolve_bath_direct(zHO_t, zHO_dot_t, 0.5d0*dt)
         if(ipred_corr /= Npred_corr)then
-          call refine_effective_hamiltonian(zpsi_t,zHO_CTEF, zHO_dot_CTEF)
+          call refine_effective_hamiltonian(zpsi_t,zHO_t, zHO_dot_t)
         end if
 
       end do
@@ -158,7 +158,7 @@ module CTEF_module
       implicit none
       complex(8),intent(inout) :: zpsi_t(2,2)
       real(8),intent(in) :: dt_t
-      integer,parameter :: Ntaylor_t = 4
+      integer,parameter :: Ntaylor_t = 6
       integer :: itaylor
       complex(8) :: zpsi_s(2,2),zhpsi_s(2,2)
       complex(8) :: zfact
@@ -176,8 +176,8 @@ module CTEF_module
 !-----------------------------------------------------------------------------------------
     subroutine dt_evolve_bath_direct(zHO_t,zHO_dot_t,dt_t)
       implicit none
-      complex(8),intent(inout) :: zHO_t(2,Num_HO)
-      complex(8),intent(in) :: zHO_dot_t(2,Num_HO)
+      complex(8),intent(inout) :: zHO_t(Num_HO,2)
+      complex(8),intent(in) :: zHO_dot_t(Num_HO,2)
       real(8),intent(in) :: dt_t
 
       zHO_t = zHO_t + dt_t * zHO_dot_t
@@ -225,9 +225,9 @@ module CTEF_module
 !-----------------------------------------------------------------------------------------
     subroutine refine_effective_hamiltonian(zpsi_t,zHO_t,zHO_dot_t)
       implicit none
-      complex(8),intent(in) :: zpsi_t(2,2), zHO_t(2,Num_HO)
-      complex(8),intent(inout) :: zHO_dot_t(2,Num_HO) 
-      integer,parameter :: Nscf_CTEF = 2
+      complex(8),intent(in) :: zpsi_t(2,2), zHO_t(Num_HO,2)
+      complex(8),intent(inout) :: zHO_dot_t(Num_HO,2) 
+      integer,parameter :: Nscf_CTEF = 8
       complex(8) :: zHb_tot_t(2,2)
       complex(8) :: zs,zvec(2)
       complex(8) :: zhpsi_t(2,2)
@@ -245,8 +245,8 @@ module CTEF_module
       zSb_CTEF(1,1) = 1d0
       zSb_CTEF(2,2) = 1d0
       zSb_CTEF(1,2) = exp(sum(&
-            -0.5d0*abs(zHO_t(1,:))**2 -0.5d0*abs(zHO_t(2,:))**2  &
-            + conjg(zHO_t(1,:))*zHO_t(2,:) &
+            -0.5d0*abs(zHO_t(:,1))**2 -0.5d0*abs(zHO_t(:,2))**2  &
+            + conjg(zHO_t(:,1))*zHO_t(:,2) &
             ))
       zSb_CTEF(2,1) = conjg(zSb_CTEF(1,2))
 
@@ -260,9 +260,9 @@ module CTEF_module
         do j =1,2
           zXb_cint_CTEF(i,j) = sum( &
             Cint_HO(:) &
-            *sqrt(0.5d0/(M_HO*Omega_HO(:)))*(conjg(zHO_t(i,:))+zHO_t(j,:)) )
-          zXb_cint_CTEF(i,j) = zxb_cint_CTEF(i,j) *zSs_CTEF(i,j) 
-          zEb_CTEF(i,j) = sum(Omega_HO(:)*conjg(zHO_t(i,:))*zHO_t(j,:))
+            *sqrt(0.5d0/(M_HO*Omega_HO(:)))*(conjg(zHO_t(:,i))+zHO_t(:,j)) )
+          zXb_cint_CTEF(i,j) = zxb_cint_CTEF(i,j)
+          zEb_CTEF(i,j) = sum(Omega_HO(:)*conjg(zHO_t(:,i))*zHO_t(:,j))
         end do
       end do
       zXb_cint_CTEF = zXb_cint_CTEF *zSb_CTEF
@@ -292,14 +292,16 @@ module CTEF_module
       do i = 1,2
         do j =1,2
           zHs_CTEF(:,:,i,j) = hs_m(:,:)*zSb_CTEF(i,j) &
-            -zXb_cint_CTEF(i,j)*Sz(:,:) + zEb_CTEF(i,j)
+            -zXb_cint_CTEF(i,j)*Sz(:,:) 
+          zHs_CTEF(1,1,i,j) = zHs_CTEF(1,1,i,j) + zEb_CTEF(i,j)
+          zHs_CTEF(2,2,i,j) = zHs_CTEF(2,2,i,j) + zEb_CTEF(i,j)
         end do
       end do
 
       do i = 1, Num_HO
-        zFb_CTEF(1,i) = - (zSzs_CTEF(1,1)*zSb_CTEF(1,1)  + zSzs_CTEF(1,2)*zSb_CTEF(1,2)) &
+        zFb_CTEF(i,1) = - (zSzs_CTEF(1,1)*zSb_CTEF(1,1)  + zSzs_CTEF(1,2)*zSb_CTEF(1,2)) &
           *cint_HO(i)*sqrt(0.5d0/(M_HO*omega_HO(i)))
-        zFb_CTEF(2,i) = - (zSzs_CTEF(2,2)*zSb_CTEF(2,2)  + zSzs_CTEF(2,1)*zSb_CTEF(2,1)) &
+        zFb_CTEF(i,2) = - (zSzs_CTEF(2,2)*zSb_CTEF(2,2)  + zSzs_CTEF(2,1)*zSb_CTEF(2,1)) &
           *cint_HO(i)*sqrt(0.5d0/(M_HO*omega_HO(i)))
       end do
 
@@ -348,10 +350,11 @@ module CTEF_module
           zHb_tot_t(2,1) = zHb_tot_t(2,1) &
             -zDs_CTEF(2,1)*zSb_CTEF(2,1) - zSs_CTEF(2,1)*zDb_CTEF(2,1) &
             + zEs_CTEF(2,1)*zSb_CTEF(2,1) + zEc_CTEF(2,1) + zSs_CTEF(2,1)*zEb_CTEF(2,1)
-
-          zHO_dot_t(:,iho) = matmul(zHb_tot_t,zHO_t(:,iho)) + zFb_CTEF(:,iho)
+          zvec(1) = zHb_tot_t(1,1)*zHO_t(iho,1)+zHb_tot_t(1,2)*zHO_t(iho,2)+zFb_CTEF(iho,1)
+          zvec(2) = zHb_tot_t(2,1)*zHO_t(iho,1)+zHb_tot_t(2,2)*zHO_t(iho,2)+zFb_CTEF(iho,2)
+          zHO_dot_t(iho,1) = (zSsb_inv_CTEF(1,1)*zvec(1) + zSsb_inv_CTEF(1,2)*zvec(2))/zi
+          zHO_dot_t(iho,2) = (zSsb_inv_CTEF(2,1)*zvec(1) + zSsb_inv_CTEF(2,2)*zvec(2))/zi
         end do
-        zHO_dot_t = matmul(zSs_inv_CTEF,zHO_dot_t)/zI
 
       end do
 
@@ -359,7 +362,7 @@ module CTEF_module
 !-----------------------------------------------------------------------------------------
   subroutine set_forward_backward_trajectries(zpsi_t,zHO_t,zweight)
     implicit none
-    complex(8),intent(out) :: zpsi_t(2,2), zHO_t(2,Num_HO), zweight
+    complex(8),intent(out) :: zpsi_t(2,2), zHO_t(Num_HO,2), zweight
     integer :: iho
     real(8) :: q1,p1,q2,p2
     real(8) :: beta_ww, exp_beta_ww
@@ -373,8 +376,8 @@ module CTEF_module
       call gaussian_random_number(q2,p2)
       z1 = q1 + zi*p1
       z2 = q2 + zi*p2
-      zHO_t(1,iho) = z1 * sqrt(2d0/3d0)
-      zHO_t(2,iho) = z2*sqrt(0.5d0) + 0.5d0*zHO_t(1,iho)
+      zHO_t(iho,1) = z1 * sqrt(2d0/3d0)
+      zHO_t(iho,2) = z2*sqrt(0.5d0) + 0.5d0*zHO_t(iho,1)
     end do
 
 
@@ -384,8 +387,8 @@ module CTEF_module
       beta_ww = beta_kB * omega_ho(iho)
       exp_beta_ww = exp(-beta_ww)
       zweight = zweight *(4d0/3d0)* (1d0-exp_beta_ww)*exp(exp_beta_ww &
-        *conjg(zHO_t(2,iho))*zHO_t(1,iho)) &
-        *exp(0.5d0*abs(zHO_t(1,iho)-zHO_t(2,iho))**2)
+        *conjg(zHO_t(iho,2))*zHO_t(iho,1)) &
+        *exp(0.5d0*abs(zHO_t(iho,1)-zHO_t(iho,2))**2)
     end do
 !    if(myrank == 0)write(*,*)"zweight0=",zweight
     
@@ -393,8 +396,8 @@ module CTEF_module
 !-----------------------------------------------------------------------------------------
   subroutine set_initial_condition(zpsi_in,zHO_in, zpsi_out,zHO_out, phi, norm)
     implicit none
-    complex(8),intent(in) :: zpsi_in(2,2),zHO_in(2,num_HO)
-    complex(8),intent(out) :: zpsi_out(2,2),zHO_out(2,num_HO)
+    complex(8),intent(in) :: zpsi_in(2,2),zHO_in(num_HO,2)
+    complex(8),intent(out) :: zpsi_out(2,2),zHO_out(num_HO,2)
     real(8),intent(in) :: phi
     real(8),intent(out) :: norm
     complex(8) :: zs_spin, zs_bath
@@ -406,8 +409,8 @@ module CTEF_module
 
     zs_spin = sum(conjg(zpsi_out(:,1))*zpsi_out(:,2))
     zs_bath = exp(sum(& 
-            -0.5d0*abs(zHO_out(1,:))**2 -0.5d0*abs(zHO_out(2,:))**2  &
-            + conjg(zHO_out(1,:))*zHO_out(2,:) &
+            -0.5d0*abs(zHO_out(:,1))**2 -0.5d0*abs(zHO_out(:,2))**2  &
+            + conjg(zHO_out(:,1))*zHO_out(:,2) &
             ))
 
 
@@ -421,12 +424,12 @@ module CTEF_module
   subroutine calc_Szt(tSz,zpsi_t,zHO_t)
     implicit none
     real(8),intent(out) :: tSz
-    complex(8),intent(in) :: zpsi_t(2,2), zHO_t(2,Num_HO)
+    complex(8),intent(in) :: zpsi_t(2,2), zHO_t(Num_HO,2)
     complex(8) :: zs, zSz_ab(2,2), zvec(2)
 
     zs = exp(sum(&
-            -0.5d0*abs(zHO_t(1,:))**2 -0.5d0*abs(zHO_t(2,:))**2  &
-            + conjg(zHO_t(1,:))*zHO_t(2,:) &
+            -0.5d0*abs(zHO_t(:,1))**2 -0.5d0*abs(zHO_t(:,2))**2  &
+            + conjg(zHO_t(:,1))*zHO_t(:,2) &
             ))
     
     tSz = abs(zpsi_t(1,1))**2 - abs(zpsi_t(2,1))**2 &
