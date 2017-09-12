@@ -27,4 +27,8 @@ subroutine setting_bath_parameters
 
   M_HO = ss/f1
 
+  if(myrank == 0)then
+    write(*,"(A,2x,e26.16e3)")"Bath GS energy:",0.5d0*sum(omega_ho)
+  end if
+
 end subroutine setting_bath_parameters

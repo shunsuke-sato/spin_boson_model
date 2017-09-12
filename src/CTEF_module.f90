@@ -228,13 +228,7 @@ module CTEF_module
       complex(8),intent(in) :: zpsi_t(2,2), zHO_t(2,Num_HO)
       complex(8),intent(inout) :: zHO_dot_t(2,Num_HO) 
       integer,parameter :: Nscf_CTEF = 2
-      complex(8) :: zs_ab(2,2) ! overlap matrix for spin
-      complex(8) :: zs_cd(2,2) ! overlap matrix for bath
-      complex(8) :: zd_ab(2,2) ! time-derivative-overlap matrix for bath
-      complex(8) :: zd_cd(2,2) ! time-derivative-overlap matrix for bath
       complex(8) :: zHb_tot_t(2,2)
-      complex(8) :: zX_Cint_av(2,2), zEb(2,2)
-      complex(8) :: zSz_ab(2,2)
       complex(8) :: zs,zvec(2)
       complex(8) :: zhpsi_t(2,2)
       integer :: iho
@@ -271,9 +265,9 @@ module CTEF_module
           zEb_CTEF(i,j) = sum(Omega_HO(:)*conjg(zHO_t(i,:))*zHO_t(j,:))
         end do
       end do
-      zXb_cint_CTEF = zXb_cint_CTEF * zSs_CTEF
-      zEb_CTEF = zEb_CTEF + sum(omega_HO)*0.5d0
-      zEb = zEb * zSs_CTEF
+      zXb_cint_CTEF = zXb_cint_CTEF *zSb_CTEF
+!      zEb_CTEF = (zEb_CTEF + sum(omega_HO)*0.5d0)*zSb_CTEF ! with zero-point energy
+      zEb_CTEF = zEb_CTEF*zSb_CTEF ! without zero-point energy
       
 ! zEs
       zvec(:) = matmul(hs_m,zpsi_t(:,1))
@@ -298,7 +292,7 @@ module CTEF_module
       do i = 1,2
         do j =1,2
           zHs_CTEF(:,:,i,j) = hs_m(:,:)*zSb_CTEF(i,j) &
-            -zXb_cint_CTEF(i,j)*Sz(:,:) + zEb(i,j)
+            -zXb_cint_CTEF(i,j)*Sz(:,:) + zEb_CTEF(i,j)
         end do
       end do
 
@@ -335,14 +329,6 @@ module CTEF_module
         zDs_CTEF(1,2) = sum( conjg(zpsi_t(:,1))*zhpsi_t(:,2) )
         zDs_CTEF(2,1) = sum( conjg(zpsi_t(:,2))*zhpsi_t(:,1) )
 
-
-! partially prepare spin-Hamiltonian
-        zDb_CTEF(1,1) = zi*real(zd_ab(1,1)) &
-          - real(zI*zd_ab(1,2)*zs_cd(1,2) + zI*zs_ab(1,2)*zd_cd(1,2))
-        zDb_CTEF(1,2) = zI*zd_ab(1,2)*zs_cd(1,2) + zI*zs_ab(1,2)*zd_cd(1,2)
-        zDb_CTEF(2,1) = zI*zd_ab(2,1)*zs_cd(2,1) + zI*zs_ab(2,1)*zd_cd(2,1)
-        zDb_CTEF(2,2) = zi*real(zd_ab(2,2)) &
-          - real(zI*zd_ab(2,1)*zs_cd(2,1) + zI*zs_ab(2,1)*zd_cd(2,1))
 
 
         do iho = 1,Num_HO
