@@ -30,7 +30,7 @@ contains
     invAmat(1,1) = Amat(2,2)/det
     invAmat(1,2) = -Amat(1,2)/det
     invAmat(2,1) = -Amat(2,1)/det
-    invAmat(2,2) = Amat(2,2)/det
+    invAmat(2,2) = Amat(1,1)/det
     
   end subroutine inverse_2x2_matrix_double
 !-----------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ contains
     invAmat(1,1) = Amat(2,2)/det
     invAmat(1,2) = -Amat(1,2)/det
     invAmat(2,1) = -Amat(2,1)/det
-    invAmat(2,2) = Amat(2,2)/det
+    invAmat(2,2) = Amat(1,1)/det
     
   end subroutine inverse_2x2_matrix_complex
 
