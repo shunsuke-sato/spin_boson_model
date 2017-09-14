@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 2.8)
 project(SPIN_BOSON Fortran)
 
 set(CMAKE_Fortran_COMPILER      "mpif90")
-set(CMAKE_Fortran_FLAGS   "-O0 ")
+set(CMAKE_Fortran_FLAGS   "-O2 ")
+#set(CMAKE_Fortran_FLAGS   "-O0 -fbounds-check")
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR})
 
