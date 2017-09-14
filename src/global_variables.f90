@@ -13,7 +13,7 @@ module global_variables
   character(32) :: calc_mode = 'CTEF' !'FBTS_mod,' 'FBTS' 'MTEF','PBME','PBME_mod'
 
 ! Spin
-  real(8),parameter :: delta_SP = 1d0, eps_SP = delta_SP
+  real(8),parameter :: delta_SP = 0.5d0, eps_SP = 0d0 !delta_SP
   complex(8) :: zpsi(2)
   real(8),parameter :: Sz(2,2) = reshape( (/1d0, 0d0, 0d0, -1d0/), (/2,2/) )
   real(8),parameter :: Sx(2,2) = reshape( (/0d0, 1d0, 1d0, 0d0/), (/2,2/) )
@@ -30,7 +30,7 @@ module global_variables
   integer,parameter :: Mjump_FBTS = 100
 
 ! Harmonic oscillator
-  integer,parameter :: Num_HO = 10 !400
+  integer,parameter :: Num_HO = 1 !400
   real(8) :: X_HO(Num_HO),V_HO(Num_HO),a_HO(Num_HO)
   real(8) :: X_HO_old(Num_HO),V_HO_old(Num_HO),a_HO_old(Num_HO)
   real(8) :: X_HO_new(Num_HO),V_HO_new(Num_HO),a_HO_new(Num_HO)
@@ -42,10 +42,10 @@ module global_variables
   real(8),parameter :: beta_kB = 1d10 !5d0/delta_SP !5d0/delta_SP
 
 ! Parameters for time-propagation
-  real(8),parameter :: Tprop = 1d0/Delta_SP,dt = 0.0005d0
+  real(8),parameter :: Tprop = 20d0,dt = 0.01d0
   integer,parameter :: Nt = aint(Tprop/dt)+1
 ! 
-  integer,parameter :: Ntraj= 10 !1000
+  integer,parameter :: Ntraj= 1000 !1000
   real(8) :: Szt(0:Nt),Szt_t(0:Nt),Szt_l(0:Nt)
   complex(8) :: zSzt_t(0:Nt)
 

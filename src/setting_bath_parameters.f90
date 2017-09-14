@@ -9,6 +9,7 @@ subroutine setting_bath_parameters
   real(8) :: w0,r,ss
   integer :: j
   real(8) :: f1
+  real(8),parameter :: gamma_p = 1d0
 
   w0 = Omega_c*(1d0-exp(-Omega_max/Omega_c))/dble(Num_HO)
   
@@ -27,8 +28,12 @@ subroutine setting_bath_parameters
 
   M_HO = ss/f1
 
-  if(myrank == 0)then
-    write(*,"(A,2x,e26.16e3)")"Bath GS energy:",0.5d0*sum(omega_ho)
-  end if
+  m_ho = 1d0
+  omega_ho = 1d0
+  cint_ho = sqrt(2d0*m_ho*omega_ho)*gamma_p
+
+!  if(myrank == 0)then
+!    write(*,"(A,2x,e26.16e3)")"Bath GS energy:",0.5d0*sum(omega_ho)
+!  end if
 
 end subroutine setting_bath_parameters
