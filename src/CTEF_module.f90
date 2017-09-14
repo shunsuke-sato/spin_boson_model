@@ -42,17 +42,18 @@ module CTEF_module
       real(8) :: phi0,phi
       complex(8) :: zpsi_stored(2,2), zHO_stored(num_HO,2)
       complex(8) :: zweight
-      real(8) :: Szt_c(0:Nt),norm_c(0:Nt),Eb_c(0:Nt),Ec_c(0:Nt)
-      real(8) :: Szt_cl(0:Nt),norm_cl(0:Nt),Eb_cl(0:Nt),Ec_cl(0:Nt)
-      real(8) :: Szt_ct(0:Nt),norm_ct(0:Nt),Eb_ct(0:Nt),Ec_ct(0:Nt)
-      real(8) :: Szt_phi_ave(0:Nt),norm_phi_ave(0:Nt),Eb_phi_ave(0:Nt),Ec_phi_ave(0:Nt)
+      real(8) :: Szt_c(0:Nt),norm_c(0:Nt),Eb_c(0:Nt),Ec_c(0:Nt),Es_c(0:Nt)
+      real(8) :: Szt_cl(0:Nt),norm_cl(0:Nt),Eb_cl(0:Nt),Ec_cl(0:Nt),Es_cl(0:Nt)
+      real(8) :: Szt_ct(0:Nt),norm_ct(0:Nt),Eb_ct(0:Nt),Ec_ct(0:Nt),Es_ct(0:Nt)
+      real(8) :: Szt_phi_ave(0:Nt),norm_phi_ave(0:Nt),Eb_phi_ave(0:Nt),Ec_phi_ave(0:Nt)&
+        ,Es_phi_ave(0:Nt)
       logical :: is_stable
       integer :: ntraj_tot, ntraj_tot_l
       integer :: ntraj_stable, ntraj_stable_l
 
 
       ntraj_tot_l = 0; ntraj_stable_l = 0
-      Szt_cl=0d0; norm_cl=0d0;Eb_cl=0d0;Ec_cl=0d0
+      Szt_cl=0d0; norm_cl=0d0;Eb_cl=0d0;Ec_cl=0d0;Es_cl=0d0
       call setting_bath_parameters
       
       do itraj = 1,Ntraj
@@ -67,6 +68,7 @@ module CTEF_module
         norm_phi_ave = 0d0
         Eb_phi_ave   = 0d0
         Ec_phi_ave   = 0d0
+        Es_phi_ave   = 0d0
         do iphi = 0,Nphi-1
 
           if(.not. is_stable)exit
@@ -75,11 +77,12 @@ module CTEF_module
           call set_initial_condition(zpsi_stored,zHO_stored, &
                                      zpsi_CTEF,  zHO_CTEF, phi, norm)
 
-          call CTEF_dynamics(norm_ct, Szt_ct, Eb_ct, Ec_ct)
+          call CTEF_dynamics(norm_ct, Szt_ct, Eb_ct, Ec_ct,Es_ct)
           Szt_phi_ave  = Szt_phi_ave  + norm*exp(-zI*phi)*zweight*Szt_ct
           norm_phi_ave = norm_phi_ave + norm*exp(-zI*phi)*zweight*norm_ct
           Eb_phi_ave   = Eb_phi_ave   + norm*exp(-zI*phi)*zweight*Eb_ct
           Ec_phi_ave   = Ec_phi_ave   + norm*exp(-zI*phi)*zweight*Ec_ct
+          Es_phi_ave   = Es_phi_ave   + norm*exp(-zI*phi)*zweight*Es_ct
 
           if(.not. (abs(norm_ct(Nt)-1d0) < eps_norm))is_stable = .false.
 
@@ -91,6 +94,7 @@ module CTEF_module
           norm_cl = norm_cl + norm_phi_ave
           Eb_cl   = Eb_cl   + Eb_phi_ave
           Ec_cl   = Ec_cl   + Ec_phi_ave
+          Es_cl   = Es_cl   + Es_phi_ave
         end if
 
         ntraj_tot_l = ntraj_tot_l + 1
@@ -104,10 +108,12 @@ module CTEF_module
       norm_cl = norm_cl/(ntraj_stable*Nphi)
       Eb_cl   = Eb_cl/(ntraj_stable*Nphi)
       Ec_cl   = Ec_cl/(ntraj_stable*Nphi)
+      Es_cl   = Es_cl/(ntraj_stable*Nphi)
       call MPI_ALLREDUCE(Szt_cl,Szt_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
       call MPI_ALLREDUCE(norm_cl,norm_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
       call MPI_ALLREDUCE(Eb_cl,Eb_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
       call MPI_ALLREDUCE(Ec_cl,Ec_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
+      call MPI_ALLREDUCE(Es_cl,Es_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
 
       if(myrank == 0)then
         write(*,*)"# of total trajectories: ",ntraj_tot
@@ -116,6 +122,7 @@ module CTEF_module
         do it = 0,Nt
           write(nfile_CTEF_Sz,"(999e26.16e3)")dt*it,norm_c(it), &
                                                     Szt_c(it),  &
+                                                    Es_c(it),   &
                                                     Eb_c(it),   &
                                                     Ec_c(it) 
         end do
@@ -125,10 +132,10 @@ module CTEF_module
 
     end subroutine CTEF
 !-----------------------------------------------------------------------------------------
-    subroutine CTEF_dynamics(norm_ct, Szt_ct, Eb_ct, Ec_ct)
+    subroutine CTEF_dynamics(norm_ct, Szt_ct, Eb_ct, Ec_ct, Es_ct)
 ! Assuming zpsi_CTEF and zHO_CTEF are given 
       implicit none
-      real(8),intent(out) :: Szt_ct(0:Nt),norm_ct(0:Nt),Eb_ct(0:Nt),Ec_ct(0:Nt)
+      real(8),intent(out) :: Szt_ct(0:Nt),norm_ct(0:Nt),Eb_ct(0:Nt),Ec_ct(0:Nt),Es_ct(0:Nt)
       real(8) :: Sz_av
       integer :: it
       real(8) :: X_Cint_av
@@ -138,6 +145,7 @@ module CTEF_module
       norm_ct  = 0d0
       Eb_ct    = 0d0
       Ec_ct    = 0d0
+      Es_ct    = 0d0
 
 
 
@@ -145,12 +153,12 @@ module CTEF_module
       call refine_effective_hamiltonian(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
       call refine_effective_hamiltonian(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
       call refine_effective_hamiltonian(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
-      call calc_output(norm_ct(0),Szt_ct(0),Eb_ct(0),Ec_ct(0))
+      call calc_output(norm_ct(0),Szt_ct(0),Eb_ct(0),Ec_ct(0),Es_ct(0))
 
       do it = 0,Nt-1
 
         call dt_evolve_etrs(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
-        call calc_output(norm_ct(it+1),Szt_ct(it+1),Eb_ct(it+1),Ec_ct(it+1))
+        call calc_output(norm_ct(it+1),Szt_ct(it+1),Eb_ct(it+1),Ec_ct(it+1),Es_ct(it+1))
 
       end do
 
@@ -293,7 +301,6 @@ module CTEF_module
           zXb_cint_CTEF(i,j) = sum( &
             Cint_HO(:) &
             *sqrt(0.5d0/(M_HO*Omega_HO(:)))*(conjg(zHO_t(:,i))+zHO_t(:,j)) )
-          zXb_cint_CTEF(i,j) = zxb_cint_CTEF(i,j)
           zEb_CTEF(i,j) = sum(Omega_HO(:)*conjg(zHO_t(:,i))*zHO_t(:,j))
         end do
       end do
@@ -471,12 +478,13 @@ module CTEF_module
 
   end subroutine calc_Szt
 !-----------------------------------------------------------------------------------------
-  subroutine calc_output(norm_ct0,Szt_ct0,Eb_ct0,Ec_ct0)
+  subroutine calc_output(norm_ct0,Szt_ct0,Eb_ct0,Ec_ct0,Es_ct0)
     implicit none
-    real(8),intent(out) :: Szt_ct0,norm_ct0,Eb_ct0,Ec_ct0
+    real(8),intent(out) :: Szt_ct0,norm_ct0,Eb_ct0,Ec_ct0,Es_ct0
 
     norm_ct0 = sum(zSsb_CTEF)
-    Szt_ct0  = sum(zEs_CTEF*zSb_CTEF)
+    Szt_ct0  = sum(zSzs_CTEF*zSb_CTEF)
+    Es_ct0  = sum(zEs_CTEF*zSb_CTEF)
     Eb_ct0   = sum(zSs_CTEF*zEb_CTEF)
     Ec_ct0 = sum(zEc_CTEF)
 
