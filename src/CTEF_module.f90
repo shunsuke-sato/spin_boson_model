@@ -12,6 +12,7 @@ module CTEF_module
   private
 ! phase average
   integer,parameter :: Nphi = 2
+  real(8),parameter :: eps_norm = 0.1d0
 ! spin
   complex(8) :: zpsi_CTEF(2,2)
 ! Harmonic oscillator 
@@ -44,7 +45,13 @@ module CTEF_module
       real(8) :: Szt_c(0:Nt),norm_c(0:Nt),Eb_c(0:Nt),Ec_c(0:Nt)
       real(8) :: Szt_cl(0:Nt),norm_cl(0:Nt),Eb_cl(0:Nt),Ec_cl(0:Nt)
       real(8) :: Szt_ct(0:Nt),norm_ct(0:Nt),Eb_ct(0:Nt),Ec_ct(0:Nt)
+      real(8) :: Szt_phi_ave(0:Nt),norm_phi_ave(0:Nt),Eb_phi_ave(0:Nt),Ec_phi_ave(0:Nt)
+      logical :: is_stable
+      integer :: ntraj_tot, ntraj_tot_l
+      integer :: ntraj_stable, ntraj_stable_l
 
+
+      ntraj_tot_l = 0; ntraj_stable_l = 0
       Szt_cl=0d0; norm_cl=0d0;Eb_cl=0d0;Ec_cl=0d0
       call setting_bath_parameters
       
@@ -53,33 +60,58 @@ module CTEF_module
         call random_number(phi0); phi0 = 2d0*pi*phi0
 
         if(mod(itraj,Nprocs) /= myrank)cycle
-        if(myrank == 0)write(*,*)"itraj=",itraj,"/",Ntraj
+        if(mod(itraj,max(1,Ntraj/100)) == 0)write(*,*)"itraj=",itraj,"/",Ntraj
+
+        is_stable = .true.
+        Szt_phi_ave  = 0d0
+        norm_phi_ave = 0d0
+        Eb_phi_ave   = 0d0
+        Ec_phi_ave   = 0d0
         do iphi = 0,Nphi-1
+
+          if(.not. is_stable)exit
+
           phi = phi0 + 2d0*pi*dble(iphi)/Nphi
           call set_initial_condition(zpsi_stored,zHO_stored, &
                                      zpsi_CTEF,  zHO_CTEF, phi, norm)
 
           call CTEF_dynamics(norm_ct, Szt_ct, Eb_ct, Ec_ct)
-          Szt_cl  = Szt_cl  + norm*exp(-zI*phi)*zweight*Szt_ct
-          norm_cl = norm_cl + norm*exp(-zI*phi)*zweight*norm_ct
-          Eb_cl   = Eb_cl   + norm*exp(-zI*phi)*zweight*Eb_ct
-          Ec_cl   = Ec_cl   + norm*exp(-zI*phi)*zweight*Ec_ct
+          Szt_phi_ave  = Szt_phi_ave  + norm*exp(-zI*phi)*zweight*Szt_ct
+          norm_phi_ave = norm_phi_ave + norm*exp(-zI*phi)*zweight*norm_ct
+          Eb_phi_ave   = Eb_phi_ave   + norm*exp(-zI*phi)*zweight*Eb_ct
+          Ec_phi_ave   = Ec_phi_ave   + norm*exp(-zI*phi)*zweight*Ec_ct
 
+          if(.not. (abs(norm_ct(Nt)-1d0) < eps_norm))is_stable = .false.
 
         end do
 
+        if(is_stable)then
+          ntraj_stable_l = ntraj_stable_l + 1
+          Szt_cl  = Szt_cl  + Szt_phi_ave
+          norm_cl = norm_cl + norm_phi_ave
+          Eb_cl   = Eb_cl   + Eb_phi_ave
+          Ec_cl   = Ec_cl   + Ec_phi_ave
+        end if
+
+        ntraj_tot_l = ntraj_tot_l + 1
+
       end do
 
-      Szt_cl  = Szt_cl/(Ntraj*Nphi)
-      norm_cl = norm_cl/(Ntraj*Nphi)
-      Eb_cl   = Eb_cl/(Ntraj*Nphi)
-      Ec_cl   = Ec_cl/(Ntraj*Nphi)
+      call MPI_ALLREDUCE(ntraj_tot_l,ntraj_tot,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,ierr)
+      call MPI_ALLREDUCE(ntraj_stable_l,ntraj_stable,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD,ierr)
+
+      Szt_cl  = Szt_cl/(ntraj_stable*Nphi)
+      norm_cl = norm_cl/(ntraj_stable*Nphi)
+      Eb_cl   = Eb_cl/(ntraj_stable*Nphi)
+      Ec_cl   = Ec_cl/(ntraj_stable*Nphi)
       call MPI_ALLREDUCE(Szt_cl,Szt_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
       call MPI_ALLREDUCE(norm_cl,norm_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
       call MPI_ALLREDUCE(Eb_cl,Eb_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
       call MPI_ALLREDUCE(Ec_cl,Ec_c,Nt+1,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
 
       if(myrank == 0)then
+        write(*,*)"# of total trajectories: ",ntraj_tot
+        write(*,*)"# of stable trajectories:",ntraj_stable
         open(nfile_CTEF_Sz,file=file_CTEF_Sz)
         do it = 0,Nt
           write(nfile_CTEF_Sz,"(999e26.16e3)")dt*it,norm_c(it), &
