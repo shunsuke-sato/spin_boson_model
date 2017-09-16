@@ -157,13 +157,63 @@ module CTEF_module
 
       do it = 0,Nt-1
 
-        call dt_evolve_etrs(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
+!        call dt_evolve_etrs(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
+        call dt_evolve_Runge_Kutta(zpsi_CTEF,zHO_CTEF, zHO_dot_CTEF)
         call calc_output(norm_ct(it+1),Szt_ct(it+1),Eb_ct(it+1),Ec_ct(it+1),Es_ct(it+1))
 
       end do
 
 
     end subroutine CTEF_dynamics
+!-----------------------------------------------------------------------------------------
+    subroutine dt_evolve_Runge_Kutta(zpsi_t,zHO_t, zHO_dot_t)
+      implicit none
+      complex(8),intent(inout) :: zpsi_t(2,2),zHO_t(Num_HO,2),zHO_dot_t(Num_HO,2)
+      complex(8) :: zpsi_0(2,2),zHO_0(Num_HO,2)
+      complex(8) :: zpsi_1(2,2),zHO_1(Num_HO,2)
+      complex(8) :: zpsi_2(2,2),zHO_2(Num_HO,2)
+      complex(8) :: zpsi_3(2,2),zHO_3(Num_HO,2)
+      complex(8) :: zpsi_4(2,2),zHO_4(Num_HO,2)
+
+! propagation: t => t + dt/2
+
+      zpsi_0 = zpsi_t
+      zHO_0  = zHO_t
+
+! k1
+      call zhpsi_CTEF(zpsi_t,zpsi_1)
+      zpsi_1 = -zI*zpsi_1
+      zHO_1 = zHO_dot_t
+
+! k2
+      zpsi_t = zpsi_0 + 0.5d0*dt*zpsi_1
+      zHO_t  = zHO_0  + 0.5d0*dt* zHO_1
+      call refine_effective_hamiltonian(zpsi_t,zHO_t, zHO_dot_t)
+      call zhpsi_CTEF(zpsi_t,zpsi_2)
+      zpsi_2 = -zI*zpsi_2
+      zHO_2 = zHO_dot_t
+
+! k3
+      zpsi_t = zpsi_0 + 0.5d0*dt*zpsi_2
+      zHO_t  = zHO_0  + 0.5d0*dt* zHO_2
+      call refine_effective_hamiltonian(zpsi_t,zHO_t, zHO_dot_t)
+      call zhpsi_CTEF(zpsi_t,zpsi_3)
+      zpsi_3 = -zI*zpsi_3
+      zHO_3 = zHO_dot_t
+
+! k4
+      zpsi_t = zpsi_0 + dt*zpsi_3
+      zHO_t  = zHO_0  + dt* zHO_3
+      call refine_effective_hamiltonian(zpsi_t,zHO_t, zHO_dot_t)
+      call zhpsi_CTEF(zpsi_t,zpsi_4)
+      zpsi_4 = -zI*zpsi_4
+      zHO_4 = zHO_dot_t
+      zpsi_t = zpsi_0 + dt/6d0*(zpsi_1 + 2d0*zpsi_2 + 2d0*zpsi_3 + zpsi_4)
+      zHO_t  = zHO_0  + dt/6d0*(zHO_1  + 2d0*zHO_2  + 2d0*zHO_3  + zHO_4 )
+
+      call refine_effective_hamiltonian(zpsi_t,zHO_t, zHO_dot_t)
+
+    end subroutine dt_evolve_Runge_Kutta
 !-----------------------------------------------------------------------------------------
     subroutine dt_evolve_etrs(zpsi_t,zHO_t, zHO_dot_t)
       implicit none
